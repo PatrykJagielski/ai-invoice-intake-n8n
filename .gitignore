@@ -1,0 +1,8 @@
+.env
+deploy/.env.mikrus
+.venv/
+node_modules/
+samples/out/
+*.log
+.DS_Store
+__pycache__/

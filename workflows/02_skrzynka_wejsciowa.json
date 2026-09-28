@@ -1,0 +1,486 @@
+{
+  "id": "ObiegDok02Poll00",
+  "name": "02 Skrzynka wejściowa (co minutę)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "a56a4b73-837a-a9dc-110c-6ab96c288e0b",
+      "name": "Co minutę",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "462b3438-bc46-6c24-fc9c-dab35cbb4b9f",
+              "name": "folderWejscie",
+              "value": "={{ $env.DRIVE_FOLDER_WEJSCIE }}",
+              "type": "string"
+            },
+            {
+              "id": "7d1e7583-4e6b-8055-4e1f-4457a96c365c",
+              "name": "folderWTrakcie",
+              "value": "={{ $env.DRIVE_FOLDER_W_TRAKCIE }}",
+              "type": "string"
+            },
+            {
+              "id": "f0e75a14-4401-5dd0-20a7-654c8a612c09",
+              "name": "folderBledy",
+              "value": "={{ $env.DRIVE_FOLDER_BLEDY }}",
+              "type": "string"
+            },
+            {
+              "id": "2adb050a-54ed-1976-4ff6-c4be74606f0c",
+              "name": "batchSize",
+              "value": "={{ $env.POLL_BATCH_SIZE || 10 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "f4884aea-d898-94fa-218f-8bf32b505bb3",
+      "name": "Konfiguracja",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "='{{ $json.folderWejscie }}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'",
+        "limit": "={{ Number($json.batchSize) }}",
+        "filter": {},
+        "options": {
+          "fields": [
+            "id",
+            "name",
+            "mimeType",
+            "webViewLink"
+          ]
+        }
+      },
+      "id": "a7432157-48ad-bf01-bb1a-6845b13d5b5f",
+      "name": "Nowe pliki w 00_Wejscie",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.folderWTrakcie }}",
+          "mode": "id"
+        }
+      },
+      "id": "30596f33-fc95-bb92-9ee0-3ea4d8eb990c",
+      "name": "Przenieś do 10_W_trakcie",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "03aa8581-dd6c-3c99-649f-9d69e4064eb0",
+      "name": "Po jednym pliku",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "ObiegDok03Proc00",
+          "mode": "id",
+          "cachedResultName": "03 Przetwarzanie dokumentu"
+        },
+        "mode": "once",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fileId": "={{ $json.id }}",
+            "fileName": "={{ $json.name }}",
+            "mimeType": "={{ $json.mimeType }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fileId",
+              "displayName": "fileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "fileName",
+              "displayName": "fileName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "mimeType",
+              "displayName": "mimeType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "a32acf3b-50de-a61e-2a74-29677b1bad39",
+      "name": "Przetwórz dokument",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        380
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "df803ac6-5c1d-fd0c-9cd3-3b1b33d55b70",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "df803ac6-5c1d-fd0c-9cd3-3b1b33d55b70",
+      "name": "Błąd?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00a11320-aa1a-6c1c-4788-e8f9a72c515d",
+              "name": "fileId",
+              "value": "={{ $('Po jednym pliku').first().json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "d13d558b-a2b2-2344-82cd-8fab23101971",
+              "name": "fileName",
+              "value": "={{ $('Po jednym pliku').first().json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "d7572549-7530-4606-df0c-a850833e7784",
+              "name": "error",
+              "value": "={{ typeof $json.error === \"string\" ? $json.error : ($json.error.message || JSON.stringify($json.error)) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "77f19ae4-0fad-e15f-3808-a8fb58cef417",
+      "name": "Błąd przetwarzania",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1540,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Błąd przetwarzania').first().json.fileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.folderBledy }}",
+          "mode": "id"
+        }
+      },
+      "id": "bb7b57fe-9754-e1a2-25cf-aefcc03cabeb",
+      "name": "Przenieś do 90_Bledy",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1760,
+        480
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFY_EMAIL_FROM }}",
+        "toEmail": "={{ $env.NOTIFY_EMAIL_TO }}",
+        "subject": "=[Obieg dokumentów] Błąd przetwarzania: {{ $('Błąd przetwarzania').first().json.fileName }}",
+        "emailFormat": "html",
+        "html": "=<p>Nie udało się automatycznie przetworzyć pliku <b>{{ $('Błąd przetwarzania').first().json.fileName }}</b>.</p>\n<p>Błąd: <code>{{ $('Błąd przetwarzania').first().json.error }}</code></p>\n<p>Plik przeniesiono do folderu <b>90_Bledy</b>:\n<a href=\"https://drive.google.com/file/d/{{ $('Błąd przetwarzania').first().json.fileId }}/view\">otwórz plik</a>.\nPo wyjaśnieniu problemu przenieś go z powrotem do <b>00_Wejscie</b> albo zaksięguj ręcznie.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "7290f105-5098-b1f0-b38d-f498f0f32a0e",
+      "name": "Alert: błąd przetwarzania",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1980,
+        480
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "CredSmtp00000001",
+          "name": "Powiadomienia (SMTP)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Co minutę": {
+      "main": [
+        [
+          {
+            "node": "Konfiguracja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguracja": {
+      "main": [
+        [
+          {
+            "node": "Nowe pliki w 00_Wejscie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nowe pliki w 00_Wejscie": {
+      "main": [
+        [
+          {
+            "node": "Przenieś do 10_W_trakcie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Przenieś do 10_W_trakcie": {
+      "main": [
+        [
+          {
+            "node": "Po jednym pliku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Po jednym pliku": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Przetwórz dokument",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Przetwórz dokument": {
+      "main": [
+        [
+          {
+            "node": "Błąd?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Błąd?": {
+      "main": [
+        [
+          {
+            "node": "Błąd przetwarzania",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Po jednym pliku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Błąd przetwarzania": {
+      "main": [
+        [
+          {
+            "node": "Przenieś do 90_Bledy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Przenieś do 90_Bledy": {
+      "main": [
+        [
+          {
+            "node": "Alert: błąd przetwarzania",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert: błąd przetwarzania": {
+      "main": [
+        [
+          {
+            "node": "Po jednym pliku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Warsaw",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ObiegDok99Error0",
+    "saveDataSuccessExecution": "none"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

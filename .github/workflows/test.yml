@@ -1,0 +1,17 @@
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get update -q && sudo apt-get install -y -q libxml2-utils
+      - run: npm ci
+      - run: npm run build && git diff --exit-code workflows/  # workflows/ must match src/
+      - run: npm test

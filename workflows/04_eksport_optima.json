@@ -1,0 +1,391 @@
+{
+  "id": "ObiegDok04Expo00",
+  "name": "04 Eksport do Comarch Optima",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 16,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "c27c4183-c9cf-f87e-079a-f7d8136b9af4",
+      "name": "Codziennie 16:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "5f52aba1-567d-65af-2e90-4f3a146d1c25",
+      "name": "Uruchom ręcznie",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e309642a-701f-6f7a-61de-2f8ed2e314d2",
+              "name": "sheetId",
+              "value": "={{ $env.SHEET_REJESTR_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "d8a7ea3a-fe1e-118f-f27d-29dacb729eb7",
+              "name": "folderEksport",
+              "value": "={{ $env.DRIVE_FOLDER_EKSPORT }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "5c26162f-6027-515a-811c-34232c832017",
+      "name": "Konfiguracja",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dokumenty",
+          "mode": "name"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "48d4c951-6e38-a8f3-7813-01b67f04e44a",
+      "name": "Czytaj Dokumenty",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        440,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pozycje",
+          "mode": "name"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "5c8100dc-c819-cb55-cab5-a2b90f606e64",
+      "name": "Czytaj Pozycje",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/optima_export.js =====\n// Rejestr dokumentów (Google Sheets) i eksport do Comarch Optima (CSV + XML).\n// Wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs.\n//\n// UWAGA: struktura XML to szkic formatu „praca rozproszona” Optimy (rejestr zakupów VAT).\n// Przed produkcją porównaj ją z plikiem wyeksportowanym z Twojej Optimy\n// (Narzędzia -> Praca rozproszona -> Eksport) i popraw wyłącznie OPTIMA_XML_MAPPING / buildOptimaXml.\n\nconst DOC_COLUMNS = [\n  'klucz', 'status', 'typ', 'numer', 'data_wystawienia', 'data_sprzedazy', 'termin_platnosci',\n  'forma_platnosci', 'waluta', 'sprzedawca_nazwa', 'sprzedawca_nip', 'sprzedawca_kraj',\n  'sprzedawca_ulica', 'sprzedawca_kod', 'sprzedawca_miasto', 'nabywca_nazwa', 'nabywca_nip',\n  'dokument_powiazany', 'suma_netto', 'suma_vat', 'suma_brutto', 'do_zaplaty', 'vat_json',\n  'bledy', 'ostrzezenia', 'model', 'pewnosc', 'koszt_usd', 'plik_nazwa', 'plik_link', 'plik_id',\n  'przetworzono', 'eksport',\n];\n\nconst ITEM_COLUMNS = [\n  'klucz', 'lp', 'nazwa', 'kod', 'ilosc', 'jm', 'cena_netto', 'stawka_vat',\n  'wartosc_netto', 'kwota_vat', 'wartosc_brutto',\n];\n\nconst STATUS = {\n  OK: 'OK',\n  DO_WERYFIKACJI: 'DO_WERYFIKACJI',\n  ZATWIERDZONY: 'ZATWIERDZONY',\n  ODRZUCONY: 'ODRZUCONY',\n};\n\nconst OPTIMA_XML_MAPPING = {\n  namespace: 'http://www.comarch.pl/cdn/optima/offline',\n  wersja: '2.00',\n  bazaZrodlowa: 'N8N-OBIEG-DOKUMENTOW',\n  rejestr: 'ZAKUP', // nazwa rejestru zakupów w Optimie\n  akronimZ: 'nip', // 'nip' | 'nazwa' — z czego budować akronim kontrahenta\n  rodzajZakupu: 'towary', // towary | usługi | inne | środki trwałe\n  kolumnaKpr: 'Zakup towarów',\n  odliczeniaVat: 'tak',\n  typyDoRejestru: ['FAKTURA', 'FAKTURA_KOREKTA'],\n};\n\nfunction toNum(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (typeof v === 'number') return v;\n  const n = Number(String(v).replace(/\\s/g, '').replace(',', '.'));\n  return Number.isFinite(n) ? n : null;\n}\n\n// \"PL 123-456-32-18\" -> \"1234563218\"; zagraniczny zostaje z prefiksem: \"DE123456789\"\nfunction cleanNipExport(nip) {\n  return String(nip || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^PL(?=\\d{10}$)/, '');\n}\n\nfunction round2(n) {\n  return n === null ? null : Math.round(n * 100) / 100;\n}\n\n// --- Rejestr (Sheets) ----------------------------------------------------------\n\nfunction toRegisterRecords(doc, validation, meta) {\n  const d = doc || {};\n  const m = meta || {};\n  const s = d.sprzedawca || {};\n  const n = d.nabywca || {};\n  const v = validation || { errors: [], warnings: [] };\n  const dokument = {\n    klucz: v.key || '',\n    status: v.ok ? STATUS.OK : STATUS.DO_WERYFIKACJI,\n    typ: d.typ_dokumentu || '',\n    numer: d.numer || '',\n    data_wystawienia: d.data_wystawienia || '',\n    data_sprzedazy: d.data_sprzedazy || '',\n    termin_platnosci: d.termin_platnosci || '',\n    forma_platnosci: d.forma_platnosci || '',\n    waluta: d.waluta || 'PLN',\n    sprzedawca_nazwa: s.nazwa || '',\n    sprzedawca_nip: cleanNipExport(s.nip),\n    sprzedawca_kraj: s.kraj || '',\n    sprzedawca_ulica: s.ulica || '',\n    sprzedawca_kod: s.kod_pocztowy || '',\n    sprzedawca_miasto: s.miasto || '',\n    nabywca_nazwa: n.nazwa || '',\n    nabywca_nip: cleanNipExport(n.nip),\n    dokument_powiazany: d.numer_dokumentu_powiazanego || '',\n    suma_netto: toNum(d.suma_netto),\n    suma_vat: toNum(d.suma_vat),\n    suma_brutto: toNum(d.suma_brutto),\n    do_zaplaty: toNum(d.do_zaplaty),\n    vat_json: JSON.stringify(d.podsumowanie_vat || []),\n    bledy: (v.errors || []).map((e) => e.message).join('\\n'),\n    ostrzezenia: (v.warnings || []).map((w) => w.message).join('\\n'),\n    model: m.model || '',\n    pewnosc: toNum(d.pewnosc),\n    koszt_usd: m.kosztUsd === undefined ? null : m.kosztUsd,\n    plik_nazwa: m.fileName || '',\n    plik_link: m.fileLink || '',\n    plik_id: m.fileId || '',\n    przetworzono: m.processedAt || new Date().toISOString(),\n    eksport: '',\n  };\n  const pozycje = (d.pozycje || []).map((p, i) => ({\n    klucz: dokument.klucz,\n    lp: p.lp || i + 1,\n    nazwa: p.nazwa || '',\n    kod: p.kod || '',\n    ilosc: toNum(p.ilosc),\n    jm: p.jm || '',\n    cena_netto: toNum(p.cena_netto),\n    stawka_vat: p.stawka_vat === null || p.stawka_vat === undefined ? '' : String(p.stawka_vat),\n    wartosc_netto: toNum(p.wartosc_netto),\n    kwota_vat: toNum(p.kwota_vat),\n    wartosc_brutto: toNum(p.wartosc_brutto),\n  }));\n  return { dokument, pozycje };\n}\n\n/** Łączy wiersze z arkuszy Dokumenty + Pozycje w listę dokumentów do eksportu. */\nfunction recordsFromSheets(docRows, itemRows) {\n  const itemsByKey = {};\n  (itemRows || []).forEach((r) => {\n    (itemsByKey[r.klucz] = itemsByKey[r.klucz] || []).push(r);\n  });\n  return (docRows || []).map((r) => Object.assign({}, r, { pozycje: itemsByKey[r.klucz] || [] }));\n}\n\nfunction isExportable(row) {\n  return (row.status === STATUS.OK || row.status === STATUS.ZATWIERDZONY) && !row.eksport;\n}\n\n/** Wiersze tabeli VAT: z vat_json (odczyt z dokumentu), a gdy pusty — wyliczone z pozycji. */\nfunction vatRows(rec) {\n  let rows = [];\n  try {\n    rows = JSON.parse(rec.vat_json || '[]');\n  } catch (e) {\n    rows = [];\n  }\n  rows = (rows || [])\n    .map((r) => ({ stawka: String(r.stawka_vat).replace('%', '').trim().toLowerCase(), netto: toNum(r.netto), vat: toNum(r.vat) }))\n    .filter((r) => r.netto !== null);\n  if (rows.length > 0) return rows;\n\n  const byRate = {};\n  (rec.pozycje || []).forEach((p) => {\n    const rate = String(p.stawka_vat || '').replace('%', '').trim().toLowerCase();\n    const netto = toNum(p.wartosc_netto);\n    if (!rate || netto === null) return;\n    byRate[rate] = (byRate[rate] || 0) + Math.round(netto * 100);\n  });\n  const computed = Object.keys(byRate).map((rate) => {\n    const pct = Number(rate);\n    const vatGr = Number.isFinite(pct) ? Math.round((byRate[rate] * pct) / 100) : 0;\n    return { stawka: rate, netto: byRate[rate] / 100, vat: vatGr / 100 };\n  });\n  if (computed.length > 0) return computed;\n  // Ostatecznie: jedna pozycja z sum dokumentu\n  return [{ stawka: '23', netto: toNum(rec.suma_netto) || 0, vat: toNum(rec.suma_vat) || 0 }];\n}\n\n// --- CSV ------------------------------------------------------------------------\n\nfunction csvValue(v) {\n  if (v === null || v === undefined) return '';\n  if (typeof v === 'number') return String(v).replace('.', ',');\n  const s = String(v);\n  return /[;\"\\n\\r]/.test(s) ? '\"' + s.replace(/\"/g, '\"\"') + '\"' : s;\n}\n\nfunction toCsv(columns, rows) {\n  const lines = [columns.join(';')];\n  rows.forEach((r) => lines.push(columns.map((c) => csvValue(r[c])).join(';')));\n  // BOM, żeby Excel/Optima poprawnie rozpoznały UTF-8 z polskimi znakami\n  return '﻿' + lines.join('\\r\\n') + '\\r\\n';\n}\n\nconst CSV_DOC_COLUMNS = [\n  'klucz', 'typ', 'numer', 'data_wystawienia', 'data_sprzedazy', 'termin_platnosci', 'forma_platnosci',\n  'waluta', 'sprzedawca_nazwa', 'sprzedawca_nip', 'sprzedawca_ulica', 'sprzedawca_kod', 'sprzedawca_miasto',\n  'dokument_powiazany', 'suma_netto', 'suma_vat', 'suma_brutto', 'plik_nazwa', 'plik_link',\n];\n\nfunction buildCsvDokumenty(records) {\n  return toCsv(CSV_DOC_COLUMNS, records);\n}\n\nfunction buildCsvPozycje(records) {\n  const rows = [];\n  records.forEach((rec) => {\n    (rec.pozycje || []).forEach((p) => rows.push(Object.assign({ numer: rec.numer, typ: rec.typ }, p)));\n  });\n  return toCsv(['klucz', 'typ', 'numer'].concat(ITEM_COLUMNS.slice(1)), rows);\n}\n\n// --- XML Optima -----------------------------------------------------------------\n\nfunction xmlEscape(v) {\n  return String(v === null || v === undefined ? '' : v)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n}\n\nfunction tag(name, value, indent) {\n  return `${indent}<${name}>${xmlEscape(value)}</${name}>`;\n}\n\nfunction amount(n) {\n  return (Math.round((toNum(n) || 0) * 100) / 100).toFixed(2);\n}\n\n// Deterministyczny identyfikator w formacie GUID z klucza dokumentu (FNV-1a),\n// żeby ponowny eksport tego samego dokumentu nie tworzył duplikatu w Optimie.\nfunction stableGuid(key) {\n  const parts = [];\n  for (let seed = 0; seed < 4; seed++) {\n    let h = 0x811c9dc5 ^ seed;\n    const s = String(key);\n    for (let i = 0; i < s.length; i++) {\n      h ^= s.charCodeAt(i);\n      h = Math.imul(h, 0x01000193) >>> 0;\n    }\n    parts.push(h.toString(16).padStart(8, '0'));\n  }\n  const hex = parts.join('');\n  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`.toUpperCase();\n}\n\nfunction vatStatus(stawka) {\n  if (stawka === 'zw') return { stawka: '0.00', status: 'zwolniona' };\n  if (stawka === 'np' || stawka === 'oo') return { stawka: '0.00', status: 'nie podlega' };\n  const n = Number(stawka);\n  return { stawka: (Number.isFinite(n) ? n : 0).toFixed(2), status: 'opodatkowana' };\n}\n\nfunction buildOptimaXml(records, mappingOverrides) {\n  const map = Object.assign({}, OPTIMA_XML_MAPPING, mappingOverrides || {});\n  const docs = records.filter((r) => map.typyDoRejestru.includes(r.typ));\n  const out = [];\n  out.push('<?xml version=\"1.0\" encoding=\"UTF-8\"?>');\n  out.push(`<ROOT xmlns=\"${map.namespace}\">`);\n  out.push('  <REJESTRY_ZAKUPU_VAT>');\n  out.push(tag('WERSJA', map.wersja, '    '));\n  out.push(tag('BAZA_ZRD_ID', map.bazaZrodlowa, '    '));\n  docs.forEach((r) => {\n    const i = '      ';\n    const kraj = (r.sprzedawca_kraj || 'PL').toUpperCase();\n    const krajowy = kraj === 'PL' || kraj === 'POLSKA';\n    const akronim = map.akronimZ === 'nazwa' ? String(r.sprzedawca_nazwa || '').slice(0, 20) : r.sprzedawca_nip || String(r.sprzedawca_nazwa || '').slice(0, 20);\n    out.push('    <REJESTR_ZAKUPU_VAT>');\n    out.push(tag('ID_ZRODLA', stableGuid(r.klucz), i));\n    out.push(tag('MODUL', 'Rejestr Vat', i));\n    out.push(tag('TYP', 'Rejestr zakupu', i));\n    out.push(tag('REJESTR', map.rejestr, i));\n    out.push(tag('DATA_WYSTAWIENIA', r.data_wystawienia, i));\n    out.push(tag('DATA_ZAKUPU', r.data_sprzedazy || r.data_wystawienia, i));\n    out.push(tag('DATA_WPLYWU', String(r.przetworzono || '').slice(0, 10) || r.data_wystawienia, i));\n    out.push(tag('TERMIN', r.termin_platnosci || r.data_wystawienia, i));\n    out.push(tag('NUMER', r.numer, i));\n    out.push(tag('KOREKTA', r.typ === 'FAKTURA_KOREKTA' ? 'Tak' : 'Nie', i));\n    if (r.typ === 'FAKTURA_KOREKTA') out.push(tag('KOREKTA_NUMER', r.dokument_powiazany, i));\n    out.push(tag('WEWNETRZNA', 'Nie', i));\n    out.push(tag('FISKALNA', 'Nie', i));\n    out.push(tag('DETALICZNA', 'Nie', i));\n    out.push(tag('EKSPORT', krajowy ? 'krajowy' : 'wewnątrzunijny', i));\n    out.push(tag('PODATNIK_CZYNNY', 'Tak', i));\n    out.push(tag('TYP_PODMIOTU', 'kontrahent', i));\n    out.push(tag('PODMIOT', akronim, i));\n    out.push(tag('NAZWA1', String(r.sprzedawca_nazwa || '').slice(0, 50), i));\n    out.push(tag('NAZWA2', String(r.sprzedawca_nazwa || '').slice(50, 100), i));\n    out.push(tag('NIP_KRAJ', krajowy ? 'PL' : kraj, i));\n    out.push(tag('NIP', r.sprzedawca_nip, i));\n    out.push(tag('KRAJ', krajowy ? 'Polska' : kraj, i));\n    out.push(tag('ULICA', r.sprzedawca_ulica, i));\n    out.push(tag('MIASTO', r.sprzedawca_miasto, i));\n    out.push(tag('KOD_POCZTOWY', r.sprzedawca_kod, i));\n    out.push(tag('FORMA_PLATNOSCI', r.forma_platnosci || 'przelew', i));\n    out.push(tag('WALUTA', r.waluta && r.waluta !== 'PLN' ? r.waluta : '', i));\n    out.push(`${i}<POZYCJE>`);\n    vatRows(r).forEach((v) => {\n      const st = vatStatus(v.stawka);\n      const j = i + '    ';\n      out.push(`${i}  <POZYCJA>`);\n      out.push(tag('STAWKA_VAT', st.stawka, j));\n      out.push(tag('STATUS_VAT', st.status, j));\n      out.push(tag('NETTO', amount(v.netto), j));\n      out.push(tag('VAT', amount(v.vat), j));\n      out.push(tag('RODZAJ_ZAKUPU', map.rodzajZakupu, j));\n      out.push(tag('ODLICZENIA_VAT', map.odliczeniaVat, j));\n      out.push(tag('KOLUMNA_KPR', map.kolumnaKpr, j));\n      out.push(`${i}  </POZYCJA>`);\n    });\n    out.push(`${i}</POZYCJE>`);\n    out.push('    </REJESTR_ZAKUPU_VAT>');\n  });\n  out.push('  </REJESTRY_ZAKUPU_VAT>');\n  out.push('</ROOT>');\n  return { xml: out.join('\\n') + '\\n', count: docs.length };\n}\n\n// ===== logika węzła =====\nconst docs = $('Czytaj Dokumenty').all().map((i) => i.json).filter((j) => j && j.klucz);\nconst items = $('Czytaj Pozycje').all().map((i) => i.json).filter((j) => j && j.klucz);\nconst records = recordsFromSheets(docs.filter(isExportable), items);\nif (records.length === 0) return [];\n\nconst now = new Date();\nconst stamp = now.toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '_');\nconst { xml, count } = buildOptimaXml(records);\nconst files = [\n  { name: 'optima_rejestr_zakupu_' + stamp + '.xml', content: xml, mime: 'application/xml' },\n  { name: 'dokumenty_' + stamp + '.csv', content: buildCsvDokumenty(records), mime: 'text/csv' },\n  { name: 'pozycje_' + stamp + '.csv', content: buildCsvPozycje(records), mime: 'text/csv' },\n];\nconst keys = records.map((r) => r.klucz);\nreturn files.map((f) => ({\n  json: { fileName: f.name, keys, count: records.length, xmlCount: count, exportedAt: now.toISOString() },\n  binary: { data: { data: Buffer.from(f.content, 'utf8').toString('base64'), mimeType: f.mime, fileName: f.name } },\n}));\n"
+      },
+      "id": "142c8c2d-595c-2e3f-2411-d7e0151f3abe",
+      "name": "Buduj pliki eksportu",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.folderEksport }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "0e3f9017-59ea-034c-6889-877eaef9e9f3",
+      "name": "Zapisz w 40_Eksport_Optima",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\nconst first = $('Buduj pliki eksportu').first().json;\nreturn first.keys.map((klucz) => ({ json: { klucz, eksport: first.exportedAt } }));\n"
+      },
+      "id": "783c831d-e453-f567-1c43-94ee6ad09773",
+      "name": "Oznacz jako wyeksportowane",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dokumenty",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "klucz"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "ac7cca99-47db-b58e-3f71-ce46fb803172",
+      "name": "Aktualizuj rejestr",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1540,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFY_EMAIL_FROM }}",
+        "toEmail": "={{ $env.NOTIFY_EMAIL_TO }}",
+        "subject": "=[Obieg dokumentów] Eksport do Optimy: {{ $('Buduj pliki eksportu').first().json.count }} dok.",
+        "emailFormat": "html",
+        "html": "=<p>Przygotowano eksport <b>{{ $('Buduj pliki eksportu').first().json.count }}</b> dokumentów\n({{ $('Buduj pliki eksportu').first().json.xmlCount }} faktur w pliku XML rejestru zakupów).</p>\n<p>Pliki: {{ $('Buduj pliki eksportu').all().map(i => i.json.fileName).join(', ') }}</p>\n<p><a href=\"https://drive.google.com/drive/folders/{{ $('Konfiguracja').first().json.folderEksport }}\">Otwórz folder 40_Eksport_Optima</a></p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e8212f2f-0c2d-aea5-2ba9-ec710e4f45a5",
+      "name": "Podsumowanie eksportu",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1760,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "CredSmtp00000001",
+          "name": "Powiadomienia (SMTP)"
+        }
+      },
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Codziennie 16:00": {
+      "main": [
+        [
+          {
+            "node": "Konfiguracja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uruchom ręcznie": {
+      "main": [
+        [
+          {
+            "node": "Konfiguracja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguracja": {
+      "main": [
+        [
+          {
+            "node": "Czytaj Dokumenty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Czytaj Dokumenty": {
+      "main": [
+        [
+          {
+            "node": "Czytaj Pozycje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Czytaj Pozycje": {
+      "main": [
+        [
+          {
+            "node": "Buduj pliki eksportu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buduj pliki eksportu": {
+      "main": [
+        [
+          {
+            "node": "Zapisz w 40_Eksport_Optima",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zapisz w 40_Eksport_Optima": {
+      "main": [
+        [
+          {
+            "node": "Oznacz jako wyeksportowane",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Oznacz jako wyeksportowane": {
+      "main": [
+        [
+          {
+            "node": "Aktualizuj rejestr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aktualizuj rejestr": {
+      "main": [
+        [
+          {
+            "node": "Podsumowanie eksportu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Warsaw",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ObiegDok99Error0"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

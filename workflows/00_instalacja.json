@@ -1,0 +1,295 @@
+{
+  "id": "ObiegDok00Setup0",
+  "name": "00 Instalacja – foldery Drive i arkusz rejestru",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f80365e3-2ca9-177b-8f7d-4c01610ce3ac",
+      "name": "Uruchom instalację",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "Obieg dokumentów",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "root",
+          "mode": "list",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "id": "ce30c55b-b1cb-83b6-e80c-a6edb2f53d34",
+      "name": "Utwórz folder główny",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\nconst parentId = $input.first().json.id;\nconst folders = [\n  ['00_Wejscie', 'DRIVE_FOLDER_WEJSCIE'],\n  ['10_W_trakcie', 'DRIVE_FOLDER_W_TRAKCIE'],\n  ['20_Do_weryfikacji', 'DRIVE_FOLDER_WERYFIKACJA'],\n  ['30_Archiwum', 'DRIVE_FOLDER_ARCHIWUM'],\n  ['40_Eksport_Optima', 'DRIVE_FOLDER_EKSPORT'],\n  ['90_Bledy', 'DRIVE_FOLDER_BLEDY'],\n];\nreturn folders.map(([name, env]) => ({ json: { name, env, parentId } }));\n"
+      },
+      "id": "1899fa00-5be9-b06c-065d-94ba54d8fc26",
+      "name": "Lista podfolderów",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $json.name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.parentId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "0574eb97-0920-a541-9099-84b26fc7ae50",
+      "name": "Utwórz podfoldery",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"properties\":{\"title\":\"Rejestr dokumentów – obieg\",\"locale\":\"pl_PL\",\"timeZone\":\"Europe/Warsaw\"},\"sheets\":[{\"properties\":{\"sheetId\":0,\"title\":\"Dokumenty\",\"gridProperties\":{\"frozenRowCount\":1,\"columnCount\":38}}},{\"properties\":{\"sheetId\":1,\"title\":\"Pozycje\",\"gridProperties\":{\"frozenRowCount\":1,\"columnCount\":16}}}]}",
+        "options": {}
+      },
+      "id": "505770a7-2853-0bc5-7bd1-ef76e3b7af62",
+      "name": "Utwórz arkusz rejestru",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.spreadsheetId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"requests\":[{\"updateCells\":{\"start\":{\"sheetId\":0,\"rowIndex\":0,\"columnIndex\":0},\"rows\":[{\"values\":[{\"userEnteredValue\":{\"stringValue\":\"klucz\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"status\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"typ\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"numer\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"data_wystawienia\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"data_sprzedazy\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"termin_platnosci\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"forma_platnosci\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"waluta\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"sprzedawca_nazwa\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"sprzedawca_nip\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"sprzedawca_kraj\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"sprzedawca_ulica\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"sprzedawca_kod\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"sprzedawca_miasto\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"nabywca_nazwa\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"nabywca_nip\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"dokument_powiazany\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"suma_netto\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"suma_vat\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"suma_brutto\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"do_zaplaty\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"vat_json\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"bledy\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"ostrzezenia\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"model\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"pewnosc\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"koszt_usd\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"plik_nazwa\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"plik_link\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"plik_id\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"przetworzono\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"eksport\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}}]}],\"fields\":\"userEnteredValue,userEnteredFormat.textFormat.bold\"}},{\"updateCells\":{\"start\":{\"sheetId\":1,\"rowIndex\":0,\"columnIndex\":0},\"rows\":[{\"values\":[{\"userEnteredValue\":{\"stringValue\":\"klucz\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"lp\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"nazwa\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"kod\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"ilosc\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"jm\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"cena_netto\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"stawka_vat\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"wartosc_netto\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"kwota_vat\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}},{\"userEnteredValue\":{\"stringValue\":\"wartosc_brutto\"},\"userEnteredFormat\":{\"textFormat\":{\"bold\":true}}}]}],\"fields\":\"userEnteredValue,userEnteredFormat.textFormat.bold\"}},{\"setDataValidation\":{\"range\":{\"sheetId\":0,\"startRowIndex\":1,\"startColumnIndex\":1,\"endColumnIndex\":2},\"rule\":{\"condition\":{\"type\":\"ONE_OF_LIST\",\"values\":[{\"userEnteredValue\":\"OK\"},{\"userEnteredValue\":\"DO_WERYFIKACJI\"},{\"userEnteredValue\":\"ZATWIERDZONY\"},{\"userEnteredValue\":\"ODRZUCONY\"}]},\"strict\":true,\"showCustomUi\":true}}},{\"addConditionalFormatRule\":{\"rule\":{\"ranges\":[{\"sheetId\":0,\"startRowIndex\":1,\"startColumnIndex\":1,\"endColumnIndex\":2}],\"booleanRule\":{\"condition\":{\"type\":\"TEXT_EQ\",\"values\":[{\"userEnteredValue\":\"OK\"}]},\"format\":{\"backgroundColor\":{\"red\":0.85,\"green\":0.94,\"blue\":0.83}}}}}},{\"addConditionalFormatRule\":{\"rule\":{\"ranges\":[{\"sheetId\":0,\"startRowIndex\":1,\"startColumnIndex\":1,\"endColumnIndex\":2}],\"booleanRule\":{\"condition\":{\"type\":\"TEXT_EQ\",\"values\":[{\"userEnteredValue\":\"ZATWIERDZONY\"}]},\"format\":{\"backgroundColor\":{\"red\":0.8,\"green\":0.9,\"blue\":0.97}}}}}},{\"addConditionalFormatRule\":{\"rule\":{\"ranges\":[{\"sheetId\":0,\"startRowIndex\":1,\"startColumnIndex\":1,\"endColumnIndex\":2}],\"booleanRule\":{\"condition\":{\"type\":\"TEXT_EQ\",\"values\":[{\"userEnteredValue\":\"DO_WERYFIKACJI\"}]},\"format\":{\"backgroundColor\":{\"red\":0.99,\"green\":0.85,\"blue\":0.8}}}}}},{\"addConditionalFormatRule\":{\"rule\":{\"ranges\":[{\"sheetId\":0,\"startRowIndex\":1,\"startColumnIndex\":1,\"endColumnIndex\":2}],\"booleanRule\":{\"condition\":{\"type\":\"TEXT_EQ\",\"values\":[{\"userEnteredValue\":\"ODRZUCONY\"}]},\"format\":{\"backgroundColor\":{\"red\":0.85,\"green\":0.85,\"blue\":0.85}}}}}}]}",
+        "options": {}
+      },
+      "id": "d4c96290-4642-9861-f975-d767ce3186ef",
+      "name": "Nagłówki i formatowanie",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Utwórz arkusz rejestru').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Utwórz folder główny').first().json.id }}",
+          "mode": "id"
+        }
+      },
+      "id": "d904ca8b-2656-c059-35c3-0fa5c6c49d16",
+      "name": "Przenieś arkusz do folderu",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\nconst defs = $('Lista podfolderów').all();\nconst created = $('Utwórz podfoldery').all();\nconst lines = ['# --- wklej do pliku .env (na serwerze) i zrestartuj n8n ---'];\ndefs.forEach((d, i) => lines.push(d.json.env + '=' + created[i].json.id));\nlines.push('SHEET_REJESTR_ID=' + $('Utwórz arkusz rejestru').first().json.spreadsheetId);\nconst root = $('Utwórz folder główny').first().json.id;\nreturn [{ json: {\n  env: lines.join('\\n'),\n  folder: 'https://drive.google.com/drive/folders/' + root,\n  arkusz: $('Utwórz arkusz rejestru').first().json.spreadsheetUrl,\n} }];\n"
+      },
+      "id": "9e252c62-2bd2-4aac-3d65-63c96fc38a35",
+      "name": "Fragment .env do skopiowania",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Uruchom instalację": {
+      "main": [
+        [
+          {
+            "node": "Utwórz folder główny",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Utwórz folder główny": {
+      "main": [
+        [
+          {
+            "node": "Lista podfolderów",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista podfolderów": {
+      "main": [
+        [
+          {
+            "node": "Utwórz podfoldery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Utwórz podfoldery": {
+      "main": [
+        [
+          {
+            "node": "Utwórz arkusz rejestru",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Utwórz arkusz rejestru": {
+      "main": [
+        [
+          {
+            "node": "Nagłówki i formatowanie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nagłówki i formatowanie": {
+      "main": [
+        [
+          {
+            "node": "Przenieś arkusz do folderu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Przenieś arkusz do folderu": {
+      "main": [
+        [
+          {
+            "node": "Fragment .env do skopiowania",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Warsaw",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ObiegDok99Error0"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

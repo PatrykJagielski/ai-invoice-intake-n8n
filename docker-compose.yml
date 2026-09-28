@@ -1,0 +1,43 @@
+# n8n dla obiegu dokumentów — ten sam plik lokalnie i na Mikrusie 2.1 (1 GB RAM).
+# Konfiguracja w .env (wzór: .env.example).
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:-2.40.7}
+    container_name: ${N8N_CONTAINER:-obieg-n8n}
+    restart: unless-stopped
+    ports:
+      - "${N8N_HOST_PORT:-5678}:5678"
+    env_file: .env
+    environment:
+      N8N_PORT: "5678"   # port wewnątrz kontenera; port na hoście: N8N_HOST_PORT
+      GENERIC_TIMEZONE: Europe/Warsaw
+      TZ: Europe/Warsaw
+      # Workflowy czytają konfigurację (ID folderów, arkusza) ze zmiennych środowiskowych.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # --- oszczędzanie pamięci (1 GB RAM) ---
+      N8N_DEFAULT_BINARY_DATA_MODE: filesystem   # pliki PDF na dysku, nie w RAM/bazie
+      N8N_CONCURRENCY_PRODUCTION_LIMIT: "2"      # max 2 równoległe wykonania z triggerów
+      NODE_OPTIONS: --max-old-space-size=${N8N_NODE_MAX_OLD_SPACE:-460}
+      N8N_RUNNERS_MAX_OLD_SPACE_SIZE: "${N8N_RUNNERS_MAX_OLD_SPACE:-256}"
+      DB_SQLITE_POOL_SIZE: "2"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"             # historia wykonań: 7 dni
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "5000"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/import/workflows:ro
+      - ./credentials:/import/credentials:ro
+    mem_limit: ${N8N_MEM_LIMIT:-850m}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 300s
+
+volumes:
+  n8n_data:

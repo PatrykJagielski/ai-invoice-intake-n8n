@@ -1,0 +1,1089 @@
+{
+  "id": "ObiegDok03Proc00",
+  "name": "03 Przetwarzanie dokumentu",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "fileId",
+              "type": "string"
+            },
+            {
+              "name": "fileName",
+              "type": "string"
+            },
+            {
+              "name": "mimeType",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "7510b6ab-c7cb-718d-670f-e74899833d82",
+      "name": "Wywołanie z 02",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "166a7f08-f733-680d-5eb0-39b964c61632",
+              "name": "fileId",
+              "value": "={{ $json.fileId }}",
+              "type": "string"
+            },
+            {
+              "id": "73ac55f2-e6ed-b58c-863b-9cf80df56ecc",
+              "name": "fileName",
+              "value": "={{ $json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "13ab4c75-1c93-9776-a962-d9319cc463ae",
+              "name": "mimeType",
+              "value": "={{ $json.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "a1fd1530-c3c9-5476-5f0c-b8bdbc566784",
+              "name": "folderArchiwum",
+              "value": "={{ $env.DRIVE_FOLDER_ARCHIWUM }}",
+              "type": "string"
+            },
+            {
+              "id": "c4b30057-b7aa-e0fb-8923-bec87a016bb6",
+              "name": "folderWeryfikacja",
+              "value": "={{ $env.DRIVE_FOLDER_WERYFIKACJA }}",
+              "type": "string"
+            },
+            {
+              "id": "11f37d3b-7ce6-030d-f35d-08c3b788ab14",
+              "name": "sheetId",
+              "value": "={{ $env.SHEET_REJESTR_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "b9e07cb8-b0ce-0f01-b8bf-ca92f8423773",
+              "name": "nipFirmy",
+              "value": "={{ $env.NIP_FIRMY || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "9374abe2-22a5-cbc7-4e05-965edabeec79",
+              "name": "filenameTemplate",
+              "value": "={{ $env.FILENAME_TEMPLATE || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "24aeffc6-81a0-3d17-8659-e44a6c3902ca",
+              "name": "tolLineGr",
+              "value": "={{ $env.TOL_LINE_GR || 2 }}",
+              "type": "string"
+            },
+            {
+              "id": "9817825c-c677-521b-ca73-173e3f9824bf",
+              "name": "tolDocGr",
+              "value": "={{ $env.TOL_DOC_GR || 5 }}",
+              "type": "string"
+            },
+            {
+              "id": "c9706405-df55-1170-069f-89a0e9b293ff",
+              "name": "minPewnosc",
+              "value": "={{ $env.MIN_PEWNOSC || 0.8 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "54e3ac75-5dc8-b035-d7f7-ef87b602162b",
+      "name": "Konfiguracja",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "id": "74d042c9-1557-d7f5-26ed-5209a052e1d2",
+      "name": "Pobierz plik",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        400,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1da03a13-436a-5da1-136a-57edd7f2e187",
+              "leftValue": "={{ ($binary.data.mimeType || '').startsWith('image/') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "1da03a13-436a-5da1-136a-57edd7f2e187",
+      "name": "Zdjęcie?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "dataPropertyName": "data",
+        "width": 2000,
+        "height": 2000,
+        "resizeOption": "onlyIfLarger",
+        "options": {
+          "format": "jpeg",
+          "quality": 85
+        }
+      },
+      "id": "ad0fc1f1-5fbd-0c5a-6b8c-69c4baa6dc1e",
+      "name": "Zmniejsz zdjęcie",
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/extraction.js =====\n// Ekstrakcja danych z dokumentu przez Claude (Messages API).\n// Ten plik jest wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs,\n// dlatego nie używa require/import — tylko czyste funkcje.\n\nconst EXTRACTION_SYSTEM_PROMPT = `Jesteś asystentem działu księgowości polskiej firmy. Odczytujesz dokumenty kosztowe (faktury zakupowe, korekty, dokumenty WZ, zamówienia, paragony) ze skanów, zdjęć i plików PDF.\n\nZasady:\n1. PRZEPISUJ wartości dokładnie tak, jak są wydrukowane na dokumencie. Niczego nie przeliczaj, nie poprawiaj i nie uzupełniaj sum na podstawie pozycji — poprawność matematyczną sprawdza osobny, deterministyczny etap. Jeśli suma na dokumencie jest błędna, przepisz ją taką, jaka jest.\n2. Jeżeli pola nie ma na dokumencie albo jest nieczytelne: dla pól tekstowych zwróć pusty tekst \"\", dla liczb null. Nie zgaduj. Nieczytelne fragmenty opisz w polu \"uwagi\".\n3. Kwoty zwracaj jako liczby z kropką dziesiętną (1 234,56 zł -> 1234.56). Ilości również jako liczby.\n4. Daty w formacie RRRR-MM-DD.\n5. NIP przepisz DOKŁADNIE tak, jak jest wydrukowany — znak po znaku, razem z kreskami, spacjami i ewentualnym prefiksem kraju (np. \"123-456-32-18\", \"PL 1234563218\", \"DE123456789\"). Niczego nie usuwaj ani nie scalaj — normalizację robi system. Kraj kontrahenta podaj w polu \"kraj\" jako kod ISO (PL, DE, ...).\n6. Stawka VAT jako tekst: \"23\", \"8\", \"5\", \"0\", \"zw\" (zwolniona), \"np\" (nie podlega), \"oo\" (odwrotne obciążenie). Stawki zagraniczne podaj liczbą, np. \"19\".\n7. \"cena_netto\" to cena jednostkowa netto PO rabacie. Jeśli dokument podaje tylko ceny brutto, wpisz cena_netto = null i uzupełnij wartości brutto; ustaw \"metoda_liczenia_vat\" = \"od_brutto\".\n8. \"podsumowanie_vat\" to tabela podsumowania według stawek VAT wydrukowana na dokumencie (jeśli jej nie ma — pusta lista).\n9. \"sprzedawca\" to wystawca faktury (dostawca). Na WZ — wydający towar. Na zamówieniu — dostawca, do którego kierowane jest zamówienie.\n10. \"typ_dokumentu\": FAKTURA, FAKTURA_KOREKTA, WZ (wydanie zewnętrzne / dowód dostawy), ZAMOWIENIE, PARAGON albo INNY.\n11. \"pewnosc\" (0–1): Twoja ocena, na ile odczyt całego dokumentu jest wiarygodny (jakość skanu, czytelność liczb).\n12. Dokument wielostronicowy traktuj jako jeden dokument; pozycje ze wszystkich stron w jednej liście.`;\n\nconst EXTRACTION_USER_PROMPT = 'Odczytaj dane z załączonego dokumentu zgodnie ze schematem.';\n\nfunction nullable(schema) {\n  return { anyOf: [schema, { type: 'null' }] };\n}\n\nfunction strictObject(properties) {\n  return {\n    type: 'object',\n    properties,\n    required: Object.keys(properties),\n    additionalProperties: false,\n  };\n}\n\n// API structured outputs pozwala na max 16 pól z typem „union” (np. liczba lub null).\n// Dlatego pola tekstowe są zawsze stringami (\"\" = brak — zamieniane na null w parseClaudeResponse),\n// a null dopuszczamy tylko dla kwot i ilości.\nconst NSTR = { type: 'string' };\nconst NNUM = nullable({ type: 'number' });\nconst MAX_UNION_FIELDS = 16;\n\nconst PODMIOT_SCHEMA = strictObject({\n  nazwa: NSTR,\n  nip: NSTR,\n  kraj: NSTR,\n  ulica: NSTR,\n  kod_pocztowy: NSTR,\n  miasto: NSTR,\n});\n\nconst EXTRACTION_SCHEMA = strictObject({\n  typ_dokumentu: {\n    type: 'string',\n    enum: ['FAKTURA', 'FAKTURA_KOREKTA', 'WZ', 'ZAMOWIENIE', 'PARAGON', 'INNY'],\n  },\n  numer: NSTR,\n  data_wystawienia: NSTR,\n  data_sprzedazy: NSTR,\n  termin_platnosci: NSTR,\n  forma_platnosci: NSTR,\n  waluta: NSTR,\n  numer_dokumentu_powiazanego: NSTR,\n  sprzedawca: PODMIOT_SCHEMA,\n  nabywca: PODMIOT_SCHEMA,\n  metoda_liczenia_vat: { type: 'string', enum: ['od_netto', 'od_brutto', 'nieznana'] },\n  pozycje: {\n    type: 'array',\n    items: strictObject({\n      lp: { type: 'number' },\n      nazwa: { type: 'string' },\n      kod: NSTR,\n      ilosc: NNUM,\n      jm: NSTR,\n      cena_netto: NNUM,\n      stawka_vat: NSTR,\n      wartosc_netto: NNUM,\n      kwota_vat: NNUM,\n      wartosc_brutto: NNUM,\n    }),\n  },\n  podsumowanie_vat: {\n    type: 'array',\n    items: strictObject({\n      stawka_vat: { type: 'string' },\n      netto: NNUM,\n      vat: NNUM,\n      brutto: NNUM,\n    }),\n  },\n  suma_netto: NNUM,\n  suma_vat: NNUM,\n  suma_brutto: NNUM,\n  do_zaplaty: NNUM,\n  pewnosc: { type: 'number' },\n  uwagi: NSTR,\n});\n\nconst MODEL_PRIMARY = 'claude-haiku-4-5';\nconst MODEL_FALLBACK = 'claude-sonnet-5';\n\n/**\n * Buduje body żądania POST /v1/messages.\n * mediaType: application/pdf | image/jpeg | image/png | image/webp | image/gif\n */\nfunction buildClaudeRequest({ base64, mediaType, model }) {\n  const isPdf = mediaType === 'application/pdf';\n  const fileBlock = isPdf\n    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }\n    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };\n\n  const outputConfig = { format: { type: 'json_schema', schema: EXTRACTION_SCHEMA } };\n  // Haiku 4.5 nie obsługuje parametru effort; na Sonnet 5 ograniczamy myślenie,\n  // bo to przepisywanie danych, nie rozumowanie.\n  if (model !== MODEL_PRIMARY) outputConfig.effort = 'medium';\n\n  return {\n    model,\n    max_tokens: 16000,\n    system: EXTRACTION_SYSTEM_PROMPT,\n    messages: [\n      { role: 'user', content: [fileBlock, { type: 'text', text: EXTRACTION_USER_PROMPT }] },\n    ],\n    output_config: outputConfig,\n  };\n}\n\n// \"\" -> null w całym obiekcie (pola tekstowe bez wartości)\nfunction emptyToNull(value) {\n  if (value === '') return null;\n  if (Array.isArray(value)) return value.map(emptyToNull);\n  if (value && typeof value === 'object') {\n    const out = {};\n    for (const [k, v] of Object.entries(value)) out[k] = emptyToNull(v);\n    return out;\n  }\n  return value;\n}\n\n/**\n * Wyciąga dane z odpowiedzi API. Rzuca błąd, gdy odpowiedź nie nadaje się do użycia.\n */\nfunction parseClaudeResponse(response) {\n  if (!response || !Array.isArray(response.content)) {\n    throw new Error('Nieprawidłowa odpowiedź API Claude: ' + JSON.stringify(response).slice(0, 500));\n  }\n  if (response.stop_reason === 'max_tokens') {\n    throw new Error('Odpowiedź Claude ucięta (max_tokens) — dokument zbyt długi.');\n  }\n  if (response.stop_reason === 'refusal') {\n    throw new Error('Claude odmówił przetworzenia dokumentu.');\n  }\n  const textBlock = response.content.find((b) => b.type === 'text');\n  if (!textBlock) throw new Error('Brak bloku tekstowego w odpowiedzi Claude.');\n  const data = emptyToNull(JSON.parse(textBlock.text));\n  return {\n    data,\n    model: response.model,\n    usage: response.usage || {},\n  };\n}\n\n// Koszt w USD wg cennika (za 1 mln tokenów) — do logowania w rejestrze.\nconst MODEL_PRICING = {\n  'claude-haiku-4-5': { input: 1.0, output: 5.0 },\n  'claude-sonnet-5': { input: 2.0, output: 10.0 },\n};\n\nfunction estimateCostUsd(model, usage) {\n  const key = Object.keys(MODEL_PRICING).find((m) => (model || '').startsWith(m));\n  if (!key || !usage) return null;\n  const p = MODEL_PRICING[key];\n  const cost = ((usage.input_tokens || 0) * p.input + (usage.output_tokens || 0) * p.output) / 1e6;\n  return Math.round(cost * 100000) / 100000;\n}\n\n// ===== logika węzła =====\nconst cfg = $('Konfiguracja').first().json;\nconst item = $input.first();\nconst bin = item.binary && item.binary.data;\nif (!bin) throw new Error('Brak pliku do odczytu (' + cfg.fileName + ').');\nconst SUPPORTED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];\nlet mediaType = String(bin.mimeType || cfg.mimeType || '').toLowerCase();\nif (mediaType === 'image/jpg') mediaType = 'image/jpeg';\nif (!SUPPORTED.includes(mediaType)) {\n  throw new Error('Nieobsługiwany format pliku ' + (mediaType || 'nieznany') + ' (' + cfg.fileName + '). Obsługiwane: PDF, JPG, PNG, WEBP.');\n}\nconst buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nif (buffer.length > 30 * 1024 * 1024) throw new Error('Plik większy niż 30 MB — limit API.');\nconst request = buildClaudeRequest({ base64: buffer.toString('base64'), mediaType, model: MODEL_PRIMARY });\nreturn [{ json: { request } }];\n"
+      },
+      "id": "44a08747-b03e-3e08-e94f-829700abd55e",
+      "name": "Przygotuj zapytanie",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.request) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "4611f1f5-f1b5-da29-24ba-3342c3df4438",
+      "name": "Claude – odczyt dokumentu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        300
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "CredAnthropic001",
+          "name": "Anthropic (Claude)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/extraction.js =====\n// Ekstrakcja danych z dokumentu przez Claude (Messages API).\n// Ten plik jest wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs,\n// dlatego nie używa require/import — tylko czyste funkcje.\n\nconst EXTRACTION_SYSTEM_PROMPT = `Jesteś asystentem działu księgowości polskiej firmy. Odczytujesz dokumenty kosztowe (faktury zakupowe, korekty, dokumenty WZ, zamówienia, paragony) ze skanów, zdjęć i plików PDF.\n\nZasady:\n1. PRZEPISUJ wartości dokładnie tak, jak są wydrukowane na dokumencie. Niczego nie przeliczaj, nie poprawiaj i nie uzupełniaj sum na podstawie pozycji — poprawność matematyczną sprawdza osobny, deterministyczny etap. Jeśli suma na dokumencie jest błędna, przepisz ją taką, jaka jest.\n2. Jeżeli pola nie ma na dokumencie albo jest nieczytelne: dla pól tekstowych zwróć pusty tekst \"\", dla liczb null. Nie zgaduj. Nieczytelne fragmenty opisz w polu \"uwagi\".\n3. Kwoty zwracaj jako liczby z kropką dziesiętną (1 234,56 zł -> 1234.56). Ilości również jako liczby.\n4. Daty w formacie RRRR-MM-DD.\n5. NIP przepisz DOKŁADNIE tak, jak jest wydrukowany — znak po znaku, razem z kreskami, spacjami i ewentualnym prefiksem kraju (np. \"123-456-32-18\", \"PL 1234563218\", \"DE123456789\"). Niczego nie usuwaj ani nie scalaj — normalizację robi system. Kraj kontrahenta podaj w polu \"kraj\" jako kod ISO (PL, DE, ...).\n6. Stawka VAT jako tekst: \"23\", \"8\", \"5\", \"0\", \"zw\" (zwolniona), \"np\" (nie podlega), \"oo\" (odwrotne obciążenie). Stawki zagraniczne podaj liczbą, np. \"19\".\n7. \"cena_netto\" to cena jednostkowa netto PO rabacie. Jeśli dokument podaje tylko ceny brutto, wpisz cena_netto = null i uzupełnij wartości brutto; ustaw \"metoda_liczenia_vat\" = \"od_brutto\".\n8. \"podsumowanie_vat\" to tabela podsumowania według stawek VAT wydrukowana na dokumencie (jeśli jej nie ma — pusta lista).\n9. \"sprzedawca\" to wystawca faktury (dostawca). Na WZ — wydający towar. Na zamówieniu — dostawca, do którego kierowane jest zamówienie.\n10. \"typ_dokumentu\": FAKTURA, FAKTURA_KOREKTA, WZ (wydanie zewnętrzne / dowód dostawy), ZAMOWIENIE, PARAGON albo INNY.\n11. \"pewnosc\" (0–1): Twoja ocena, na ile odczyt całego dokumentu jest wiarygodny (jakość skanu, czytelność liczb).\n12. Dokument wielostronicowy traktuj jako jeden dokument; pozycje ze wszystkich stron w jednej liście.`;\n\nconst EXTRACTION_USER_PROMPT = 'Odczytaj dane z załączonego dokumentu zgodnie ze schematem.';\n\nfunction nullable(schema) {\n  return { anyOf: [schema, { type: 'null' }] };\n}\n\nfunction strictObject(properties) {\n  return {\n    type: 'object',\n    properties,\n    required: Object.keys(properties),\n    additionalProperties: false,\n  };\n}\n\n// API structured outputs pozwala na max 16 pól z typem „union” (np. liczba lub null).\n// Dlatego pola tekstowe są zawsze stringami (\"\" = brak — zamieniane na null w parseClaudeResponse),\n// a null dopuszczamy tylko dla kwot i ilości.\nconst NSTR = { type: 'string' };\nconst NNUM = nullable({ type: 'number' });\nconst MAX_UNION_FIELDS = 16;\n\nconst PODMIOT_SCHEMA = strictObject({\n  nazwa: NSTR,\n  nip: NSTR,\n  kraj: NSTR,\n  ulica: NSTR,\n  kod_pocztowy: NSTR,\n  miasto: NSTR,\n});\n\nconst EXTRACTION_SCHEMA = strictObject({\n  typ_dokumentu: {\n    type: 'string',\n    enum: ['FAKTURA', 'FAKTURA_KOREKTA', 'WZ', 'ZAMOWIENIE', 'PARAGON', 'INNY'],\n  },\n  numer: NSTR,\n  data_wystawienia: NSTR,\n  data_sprzedazy: NSTR,\n  termin_platnosci: NSTR,\n  forma_platnosci: NSTR,\n  waluta: NSTR,\n  numer_dokumentu_powiazanego: NSTR,\n  sprzedawca: PODMIOT_SCHEMA,\n  nabywca: PODMIOT_SCHEMA,\n  metoda_liczenia_vat: { type: 'string', enum: ['od_netto', 'od_brutto', 'nieznana'] },\n  pozycje: {\n    type: 'array',\n    items: strictObject({\n      lp: { type: 'number' },\n      nazwa: { type: 'string' },\n      kod: NSTR,\n      ilosc: NNUM,\n      jm: NSTR,\n      cena_netto: NNUM,\n      stawka_vat: NSTR,\n      wartosc_netto: NNUM,\n      kwota_vat: NNUM,\n      wartosc_brutto: NNUM,\n    }),\n  },\n  podsumowanie_vat: {\n    type: 'array',\n    items: strictObject({\n      stawka_vat: { type: 'string' },\n      netto: NNUM,\n      vat: NNUM,\n      brutto: NNUM,\n    }),\n  },\n  suma_netto: NNUM,\n  suma_vat: NNUM,\n  suma_brutto: NNUM,\n  do_zaplaty: NNUM,\n  pewnosc: { type: 'number' },\n  uwagi: NSTR,\n});\n\nconst MODEL_PRIMARY = 'claude-haiku-4-5';\nconst MODEL_FALLBACK = 'claude-sonnet-5';\n\n/**\n * Buduje body żądania POST /v1/messages.\n * mediaType: application/pdf | image/jpeg | image/png | image/webp | image/gif\n */\nfunction buildClaudeRequest({ base64, mediaType, model }) {\n  const isPdf = mediaType === 'application/pdf';\n  const fileBlock = isPdf\n    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }\n    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };\n\n  const outputConfig = { format: { type: 'json_schema', schema: EXTRACTION_SCHEMA } };\n  // Haiku 4.5 nie obsługuje parametru effort; na Sonnet 5 ograniczamy myślenie,\n  // bo to przepisywanie danych, nie rozumowanie.\n  if (model !== MODEL_PRIMARY) outputConfig.effort = 'medium';\n\n  return {\n    model,\n    max_tokens: 16000,\n    system: EXTRACTION_SYSTEM_PROMPT,\n    messages: [\n      { role: 'user', content: [fileBlock, { type: 'text', text: EXTRACTION_USER_PROMPT }] },\n    ],\n    output_config: outputConfig,\n  };\n}\n\n// \"\" -> null w całym obiekcie (pola tekstowe bez wartości)\nfunction emptyToNull(value) {\n  if (value === '') return null;\n  if (Array.isArray(value)) return value.map(emptyToNull);\n  if (value && typeof value === 'object') {\n    const out = {};\n    for (const [k, v] of Object.entries(value)) out[k] = emptyToNull(v);\n    return out;\n  }\n  return value;\n}\n\n/**\n * Wyciąga dane z odpowiedzi API. Rzuca błąd, gdy odpowiedź nie nadaje się do użycia.\n */\nfunction parseClaudeResponse(response) {\n  if (!response || !Array.isArray(response.content)) {\n    throw new Error('Nieprawidłowa odpowiedź API Claude: ' + JSON.stringify(response).slice(0, 500));\n  }\n  if (response.stop_reason === 'max_tokens') {\n    throw new Error('Odpowiedź Claude ucięta (max_tokens) — dokument zbyt długi.');\n  }\n  if (response.stop_reason === 'refusal') {\n    throw new Error('Claude odmówił przetworzenia dokumentu.');\n  }\n  const textBlock = response.content.find((b) => b.type === 'text');\n  if (!textBlock) throw new Error('Brak bloku tekstowego w odpowiedzi Claude.');\n  const data = emptyToNull(JSON.parse(textBlock.text));\n  return {\n    data,\n    model: response.model,\n    usage: response.usage || {},\n  };\n}\n\n// Koszt w USD wg cennika (za 1 mln tokenów) — do logowania w rejestrze.\nconst MODEL_PRICING = {\n  'claude-haiku-4-5': { input: 1.0, output: 5.0 },\n  'claude-sonnet-5': { input: 2.0, output: 10.0 },\n};\n\nfunction estimateCostUsd(model, usage) {\n  const key = Object.keys(MODEL_PRICING).find((m) => (model || '').startsWith(m));\n  if (!key || !usage) return null;\n  const p = MODEL_PRICING[key];\n  const cost = ((usage.input_tokens || 0) * p.input + (usage.output_tokens || 0) * p.output) / 1e6;\n  return Math.round(cost * 100000) / 100000;\n}\n\n// ===== src/validate.js =====\n// Deterministyczna walidacja odczytanego dokumentu.\n// Wszystkie obliczenia w groszach (liczby całkowite) — bez błędów zmiennoprzecinkowych.\n// Wklejany do węzła Code w n8n przez scripts/build_workflows.mjs.\n\nconst DEFAULT_VALIDATION_OPTIONS = {\n  tolLineGr: 2, // tolerancja zaokrągleń na pozycji (ilość × cena)\n  tolDocGr: 5, // tolerancja na poziomie dokumentu (sumy, tabela VAT)\n  minPewnosc: 0.8,\n  nipFirmy: '', // NIP naszej firmy — ostrzeżenie, gdy dokument wystawiono na inny podmiot\n  existingKeys: [], // klucze dokumentów już obecnych w rejestrze (wykrywanie duplikatów)\n  today: null, // 'RRRR-MM-DD' — do testów; domyślnie bieżąca data\n};\n\nconst PL_VAT_RATES = { '23': 23, '8': 8, '5': 5, '0': 0, zw: 0, np: 0, oo: 0 };\n\nfunction toGr(value) {\n  if (value === null || value === undefined || value === '') return null;\n  const n = typeof value === 'number' ? value : Number(String(value).replace(/\\s/g, '').replace(',', '.'));\n  if (!Number.isFinite(n)) return null;\n  return Math.round(n * 100);\n}\n\nfunction fmtGr(gr) {\n  if (gr === null || gr === undefined) return '—';\n  const sign = gr < 0 ? '-' : '';\n  const abs = Math.abs(gr);\n  const zl = Math.floor(abs / 100)\n    .toString()\n    .replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' ');\n  return `${sign}${zl},${String(abs % 100).padStart(2, '0')}`;\n}\n\nfunction normalizeRate(rate) {\n  if (rate === null || rate === undefined) return null;\n  let r = String(rate).trim().toLowerCase().replace('%', '').replace(',', '.');\n  if (r === 'zw.' || r === 'zwol' || r === 'zwolniona') r = 'zw';\n  if (r === 'n.p.' || r === 'np.' || r === 'nie podlega') r = 'np';\n  if (r === 'o.o.' || r === 'oo.') r = 'oo';\n  const num = Number(r);\n  if (Number.isFinite(num)) {\n    // 0.23 -> 23\n    const pct = num > 0 && num < 1 ? num * 100 : num;\n    return String(Math.round(pct * 100) / 100);\n  }\n  return r;\n}\n\nfunction rateValue(rate) {\n  if (rate in PL_VAT_RATES) return PL_VAT_RATES[rate];\n  const n = Number(rate);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction normalizeNip(nip) {\n  if (!nip) return { digits: '', prefix: '' };\n  const s = String(nip).toUpperCase().replace(/[\\s-]/g, '');\n  const m = s.match(/^([A-Z]{2})?(.*)$/);\n  return { prefix: m[1] || '', digits: m[2].replace(/[^0-9A-Z]/g, '') };\n}\n\nfunction isValidPlNip(digits) {\n  if (!/^\\d{10}$/.test(digits)) return false;\n  const w = [6, 5, 7, 2, 3, 4, 5, 6, 7];\n  const sum = w.reduce((acc, wi, i) => acc + wi * Number(digits[i]), 0);\n  const ctrl = sum % 11;\n  return ctrl !== 10 && ctrl === Number(digits[9]);\n}\n\nfunction isPolish(podmiot, nipPrefix) {\n  const kraj = (podmiot && podmiot.kraj ? String(podmiot.kraj) : '').toUpperCase();\n  if (nipPrefix && nipPrefix !== 'PL') return false;\n  return !kraj || kraj === 'PL' || kraj === 'POLSKA';\n}\n\nfunction isIsoDate(s) {\n  if (typeof s !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return false;\n  const d = new Date(s + 'T00:00:00Z');\n  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;\n}\n\nfunction documentKey(doc) {\n  const { digits } = normalizeNip(doc && doc.sprzedawca && doc.sprzedawca.nip);\n  const numer = String((doc && doc.numer) || '')\n    .toUpperCase()\n    .replace(/\\s+/g, '');\n  return `${digits || 'BRAK-NIP'}|${numer || 'BRAK-NUMERU'}`;\n}\n\n/**\n * Główna funkcja walidacji.\n * Zwraca { ok, errors[], warnings[], needsRetry, key, totals }.\n * errors/warnings: { code, message, retryable }\n */\nfunction validateDocument(doc, userOptions) {\n  const opt = Object.assign({}, DEFAULT_VALIDATION_OPTIONS, userOptions || {});\n  const errors = [];\n  const warnings = [];\n  const err = (code, message, retryable = true) => errors.push({ code, message, retryable });\n  const warn = (code, message) => warnings.push({ code, message, retryable: false });\n\n  if (!doc || typeof doc !== 'object') {\n    err('BRAK_DANYCH', 'Brak odczytanych danych dokumentu.');\n    return { ok: false, errors, warnings, needsRetry: true, key: null, totals: null };\n  }\n\n  const typ = doc.typ_dokumentu;\n  const isInvoice = typ === 'FAKTURA' || typ === 'FAKTURA_KOREKTA';\n  const isKorekta = typ === 'FAKTURA_KOREKTA';\n  const pozycje = Array.isArray(doc.pozycje) ? doc.pozycje : [];\n  const podsumowanie = Array.isArray(doc.podsumowanie_vat) ? doc.podsumowanie_vat : [];\n\n  // --- 1. Typ i pola wymagane -------------------------------------------------\n  if (!typ || typ === 'INNY') {\n    err('TYP_NIEROZPOZNANY', 'Nie rozpoznano typu dokumentu (FV / WZ / zamówienie).', false);\n  }\n  if (!doc.numer) err('BRAK_NUMERU', 'Brak numeru dokumentu.');\n  if (!doc.data_wystawienia) err('BRAK_DATY', 'Brak daty wystawienia.');\n  if (!doc.sprzedawca || !doc.sprzedawca.nazwa) err('BRAK_KONTRAHENTA', 'Brak nazwy kontrahenta (sprzedawcy/dostawcy).');\n\n  if (isInvoice || typ === 'PARAGON') {\n    if (toGr(doc.suma_brutto) === null) err('BRAK_SUMY', 'Brak kwoty brutto do zapłaty w podsumowaniu.');\n  }\n  if (isInvoice && pozycje.length === 0) err('BRAK_POZYCJI', 'Faktura nie zawiera żadnych odczytanych pozycji.');\n  if (typ === 'WZ' || typ === 'ZAMOWIENIE') {\n    if (pozycje.length === 0) err('BRAK_POZYCJI', 'Dokument nie zawiera żadnych odczytanych pozycji.');\n    pozycje.forEach((p, i) => {\n      const q = Number(p.ilosc);\n      if (!p.ilosc || !Number.isFinite(q) || q === 0) {\n        err('BRAK_ILOSCI', `Pozycja ${p.lp || i + 1} („${p.nazwa}”): brak ilości.`);\n      }\n    });\n  }\n\n  // --- 2. Daty ------------------------------------------------------------------\n  const today = opt.today || new Date().toISOString().slice(0, 10);\n  for (const field of ['data_wystawienia', 'data_sprzedazy', 'termin_platnosci']) {\n    const v = doc[field];\n    if (v && !isIsoDate(v)) err('ZLA_DATA', `Nieprawidłowa data w polu ${field}: „${v}”.`);\n  }\n  if (isIsoDate(doc.data_wystawienia)) {\n    const days = (Date.parse(doc.data_wystawienia) - Date.parse(today)) / 86400000;\n    if (days > 1) warn('DATA_PRZYSZLA', `Data wystawienia ${doc.data_wystawienia} jest w przyszłości.`);\n    if (days < -365) warn('DATA_STARA', `Data wystawienia ${doc.data_wystawienia} jest starsza niż rok.`);\n  }\n\n  // --- 3. NIP -------------------------------------------------------------------\n  const seller = normalizeNip(doc.sprzedawca && doc.sprzedawca.nip);\n  if (isInvoice) {\n    if (!seller.digits) {\n      err('BRAK_NIP', 'Brak NIP sprzedawcy.');\n    } else if (isPolish(doc.sprzedawca, seller.prefix)) {\n      if (!isValidPlNip(seller.digits)) err('ZLY_NIP', `NIP sprzedawcy ${seller.digits} ma błędną sumę kontrolną.`);\n    } else {\n      warn('KONTRAHENT_ZAGRANICZNY', `Sprzedawca zagraniczny (${seller.prefix || doc.sprzedawca.kraj} ${seller.digits}) — sprawdź rodzaj transakcji (WNT/import usług).`);\n    }\n  } else if (seller.digits && isPolish(doc.sprzedawca, seller.prefix) && !isValidPlNip(seller.digits)) {\n    warn('ZLY_NIP', `NIP kontrahenta ${seller.digits} ma błędną sumę kontrolną.`);\n  }\n  const buyer = normalizeNip(doc.nabywca && doc.nabywca.nip);\n  if (buyer.digits && isPolish(doc.nabywca, buyer.prefix) && !isValidPlNip(buyer.digits)) {\n    warn('ZLY_NIP_NABYWCY', `NIP nabywcy ${buyer.digits} ma błędną sumę kontrolną.`);\n  }\n  const nipFirmy = normalizeNip(opt.nipFirmy).digits;\n  if (isInvoice && nipFirmy && buyer.digits && buyer.digits !== nipFirmy) {\n    warn('INNY_NABYWCA', `Nabywca na fakturze (NIP ${buyer.digits}) to nie nasza firma (NIP ${nipFirmy}).`);\n  }\n\n  // --- 4. Waluta, pewność ----------------------------------------------------\n  if (doc.waluta && String(doc.waluta).toUpperCase() !== 'PLN') {\n    warn('WALUTA_OBCA', `Dokument w walucie ${doc.waluta} — wymaga przeliczenia kursem NBP.`);\n  }\n  const pewnosc = Number(doc.pewnosc);\n  const lowConfidence = Number.isFinite(pewnosc) && pewnosc < opt.minPewnosc;\n  if (lowConfidence) warn('NISKA_PEWNOSC', `Model ocenił pewność odczytu na ${pewnosc} (< ${opt.minPewnosc}).`);\n\n  // --- 5. Pozycje: ilość × cena, netto + VAT = brutto -------------------------\n  const byRate = {}; // stawka -> { netto, vat, brutto, nettoKnown, bruttoKnown }\n  let linesNetto = 0;\n  let linesBrutto = 0;\n  let allLinesHaveNetto = pozycje.length > 0;\n  let allLinesHaveBrutto = pozycje.length > 0;\n  let anyAmounts = false;\n\n  pozycje.forEach((p, i) => {\n    const label = `Pozycja ${p.lp || i + 1} („${String(p.nazwa || '').slice(0, 40)}”)`;\n    const netto = toGr(p.wartosc_netto);\n    const vat = toGr(p.kwota_vat);\n    const brutto = toGr(p.wartosc_brutto);\n    const rate = normalizeRate(p.stawka_vat);\n    const qty = Number(p.ilosc);\n    const price = p.cena_netto === null || p.cena_netto === undefined ? null : Number(p.cena_netto);\n\n    if (netto !== null || brutto !== null) anyAmounts = true;\n    if (netto === null) allLinesHaveNetto = false;\n    else linesNetto += netto;\n    if (brutto === null) allLinesHaveBrutto = false;\n    else linesBrutto += brutto;\n\n    if (netto !== null && price !== null && Number.isFinite(price) && Number.isFinite(qty) && p.ilosc !== null) {\n      const expected = Math.round(qty * price * 100);\n      if (Math.abs(expected - netto) > opt.tolLineGr) {\n        err('POZYCJA_ILOSC_CENA', `${label}: ${qty} × ${fmtGr(Math.round(price * 100))} = ${fmtGr(expected)}, a wartość netto na dokumencie to ${fmtGr(netto)}.`);\n      }\n    }\n    if (netto !== null && vat !== null && brutto !== null && Math.abs(netto + vat - brutto) > opt.tolLineGr) {\n      err('POZYCJA_BRUTTO', `${label}: netto ${fmtGr(netto)} + VAT ${fmtGr(vat)} ≠ brutto ${fmtGr(brutto)}.`);\n    }\n    if (rate !== null && rateValue(rate) === null) {\n      warn('NIEZNANA_STAWKA', `${label}: nierozpoznana stawka VAT „${p.stawka_vat}”.`);\n    } else if (rate !== null && !(rate in PL_VAT_RATES)) {\n      warn('STAWKA_NIETYPOWA', `${label}: stawka VAT ${rate}% nie jest stawką krajową.`);\n    }\n    if (isInvoice && rate === null && (netto !== null || brutto !== null)) {\n      err('BRAK_STAWKI', `${label}: brak stawki VAT.`);\n    }\n\n    if (rate !== null) {\n      const g = (byRate[rate] = byRate[rate] || { netto: 0, vat: 0, brutto: 0, nettoKnown: true, bruttoKnown: true });\n      if (netto === null) g.nettoKnown = false;\n      else g.netto += netto;\n      if (brutto === null) g.bruttoKnown = false;\n      else g.brutto += brutto;\n      if (vat !== null) g.vat += vat;\n    }\n  });\n\n  // --- 6. Podsumowanie dokumentu (weryfikacja bezwarunkowa) --------------------\n  const sumaNetto = toGr(doc.suma_netto);\n  const sumaVat = toGr(doc.suma_vat);\n  const sumaBrutto = toGr(doc.suma_brutto);\n  const hasSummaryAmounts = sumaNetto !== null || sumaBrutto !== null;\n  // WZ / zamówienie bez kwot: sprawdzamy tylko ilości.\n  const checkMath = isInvoice || typ === 'PARAGON' || anyAmounts || hasSummaryAmounts;\n\n  if (checkMath) {\n    // 6a. Suma pozycji vs podsumowanie dokumentu\n    if (allLinesHaveNetto && sumaNetto !== null) {\n      if (Math.abs(linesNetto - sumaNetto) > opt.tolDocGr) {\n        err('SUMA_NETTO', `Suma netto pozycji ${fmtGr(linesNetto)} ≠ netto w podsumowaniu ${fmtGr(sumaNetto)} (różnica ${fmtGr(linesNetto - sumaNetto)}).`);\n      }\n    } else if (allLinesHaveBrutto && sumaBrutto !== null) {\n      if (Math.abs(linesBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('SUMA_BRUTTO_POZYCJI', `Suma brutto pozycji ${fmtGr(linesBrutto)} ≠ brutto w podsumowaniu ${fmtGr(sumaBrutto)} (różnica ${fmtGr(linesBrutto - sumaBrutto)}).`);\n      }\n    } else if (pozycje.length > 0 && isInvoice) {\n      err('POZYCJE_BEZ_KWOT', 'Nie da się zsumować pozycji — brak wartości netto/brutto na części pozycji.');\n    }\n\n    if (allLinesHaveBrutto && sumaBrutto !== null && allLinesHaveNetto && sumaNetto !== null) {\n      if (Math.abs(linesBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('SUMA_BRUTTO_POZYCJI', `Suma brutto pozycji ${fmtGr(linesBrutto)} ≠ brutto w podsumowaniu ${fmtGr(sumaBrutto)}.`);\n      }\n    }\n\n    // 6b. netto + VAT = brutto dla całego dokumentu\n    if (sumaNetto !== null && sumaVat !== null && sumaBrutto !== null) {\n      if (Math.abs(sumaNetto + sumaVat - sumaBrutto) > 1) {\n        err('SUMA_NETTO_VAT_BRUTTO', `Podsumowanie: netto ${fmtGr(sumaNetto)} + VAT ${fmtGr(sumaVat)} ≠ brutto ${fmtGr(sumaBrutto)}.`);\n      }\n    } else if (isInvoice && (sumaNetto === null || sumaVat === null)) {\n      warn('NIEPELNE_PODSUMOWANIE', 'Podsumowanie nie zawiera osobno kwot netto i VAT.');\n    }\n\n    // 6c. Tabela VAT wg stawek\n    if (podsumowanie.length > 0) {\n      let tNetto = 0;\n      let tVat = 0;\n      let tBrutto = 0;\n      let tNettoOk = true;\n      let tVatOk = true;\n      let tBruttoOk = true;\n      const seenRates = new Set();\n\n      podsumowanie.forEach((row) => {\n        const rate = normalizeRate(row.stawka_vat);\n        seenRates.add(rate);\n        const n = toGr(row.netto);\n        const v = toGr(row.vat);\n        const b = toGr(row.brutto);\n        if (n === null) tNettoOk = false;\n        else tNetto += n;\n        if (v === null) tVatOk = false;\n        else tVat += v;\n        if (b === null) tBruttoOk = false;\n        else tBrutto += b;\n\n        if (n !== null && v !== null && b !== null && Math.abs(n + v - b) > 1) {\n          err('VAT_WIERSZ', `Tabela VAT, stawka ${rate}: netto ${fmtGr(n)} + VAT ${fmtGr(v)} ≠ brutto ${fmtGr(b)}.`);\n        }\n        const rv = rateValue(rate);\n        if (n !== null && v !== null && rv !== null) {\n          // VAT liczony od netto (lub od brutto — wtedy dopuszczamy większą różnicę zaokrągleń)\n          const expectedVat = Math.round((n * rv) / 100);\n          const tol = doc.metoda_liczenia_vat === 'od_brutto' ? opt.tolDocGr : Math.max(1, opt.tolLineGr);\n          if (Math.abs(expectedVat - v) > tol) {\n            err('VAT_STAWKA', `Tabela VAT, stawka ${rate}: ${rv}% od ${fmtGr(n)} to ${fmtGr(expectedVat)}, a na dokumencie VAT = ${fmtGr(v)}.`);\n          }\n        }\n        const g = byRate[rate];\n        if (g && n !== null && g.nettoKnown && Math.abs(g.netto - n) > opt.tolDocGr) {\n          err('VAT_POZYCJE', `Stawka ${rate}: suma netto pozycji ${fmtGr(g.netto)} ≠ netto w tabeli VAT ${fmtGr(n)}.`);\n        } else if (g && b !== null && !g.nettoKnown && g.bruttoKnown && Math.abs(g.brutto - b) > opt.tolDocGr) {\n          err('VAT_POZYCJE', `Stawka ${rate}: suma brutto pozycji ${fmtGr(g.brutto)} ≠ brutto w tabeli VAT ${fmtGr(b)}.`);\n        }\n      });\n\n      Object.keys(byRate).forEach((rate) => {\n        if (!seenRates.has(rate)) {\n          err('VAT_BRAK_STAWKI', `Pozycje zawierają stawkę ${rate}, której nie ma w tabeli podsumowania VAT.`);\n        }\n      });\n\n      if (tNettoOk && sumaNetto !== null && Math.abs(tNetto - sumaNetto) > opt.tolDocGr) {\n        err('VAT_SUMA_NETTO', `Suma netto tabeli VAT ${fmtGr(tNetto)} ≠ netto dokumentu ${fmtGr(sumaNetto)}.`);\n      }\n      if (tVatOk && sumaVat !== null && Math.abs(tVat - sumaVat) > opt.tolDocGr) {\n        err('VAT_SUMA_VAT', `Suma VAT tabeli ${fmtGr(tVat)} ≠ VAT dokumentu ${fmtGr(sumaVat)}.`);\n      }\n      if (tBruttoOk && sumaBrutto !== null && Math.abs(tBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('VAT_SUMA_BRUTTO', `Suma brutto tabeli VAT ${fmtGr(tBrutto)} ≠ brutto dokumentu ${fmtGr(sumaBrutto)}.`);\n      }\n    } else if (isInvoice && sumaNetto !== null && sumaVat !== null) {\n      // Brak tabeli VAT: VAT dokumentu musi się zgadzać z VAT wyliczonym z pozycji.\n      let expectedVat = 0;\n      let computable = true;\n      Object.keys(byRate).forEach((rate) => {\n        const rv = rateValue(rate);\n        if (rv === null || !byRate[rate].nettoKnown) computable = false;\n        else expectedVat += Math.round((byRate[rate].netto * rv) / 100);\n      });\n      if (computable && Object.keys(byRate).length > 0 && Math.abs(expectedVat - sumaVat) > opt.tolDocGr) {\n        err('VAT_WYLICZONY', `VAT wyliczony z pozycji ${fmtGr(expectedVat)} ≠ VAT na dokumencie ${fmtGr(sumaVat)}.`);\n      }\n    }\n\n    // 6d. Do zapłaty\n    const doZaplaty = toGr(doc.do_zaplaty);\n    if (doZaplaty !== null && sumaBrutto !== null && doZaplaty !== sumaBrutto && !isKorekta) {\n      warn('DO_ZAPLATY', `Kwota do zapłaty ${fmtGr(doZaplaty)} różni się od brutto ${fmtGr(sumaBrutto)} (zaliczka? częściowa płatność?).`);\n    }\n    if (!isKorekta && sumaBrutto !== null && sumaBrutto < 0) {\n      warn('KWOTA_UJEMNA', 'Ujemna kwota brutto na dokumencie, który nie jest korektą.');\n    }\n  }\n\n  // --- 7. Duplikaty ---------------------------------------------------------------\n  const key = documentKey(doc);\n  if (doc.numer && (opt.existingKeys || []).includes(key)) {\n    err('DUPLIKAT', `Dokument ${doc.numer} od kontrahenta NIP ${seller.digits || '—'} jest już w rejestrze.`, false);\n  }\n\n  const needsRetry = errors.some((e) => e.retryable) || lowConfidence;\n  return {\n    ok: errors.length === 0,\n    errors,\n    warnings,\n    needsRetry,\n    key,\n    totals: {\n      pozycje_netto: allLinesHaveNetto ? linesNetto / 100 : null,\n      pozycje_brutto: allLinesHaveBrutto ? linesBrutto / 100 : null,\n    },\n  };\n}\n\n// ===== logika węzła =====\nconst parsed = parseClaudeResponse($input.first().json);\nlet kosztUsd = estimateCostUsd(parsed.model, parsed.usage) || 0;\n// Przy ponownym odczycie (model zapasowy) doliczamy koszt pierwszej próby.\nif ($runIndex > 0) {\n  try { kosztUsd += Number($('Odczytaj odpowiedź').first(0, $runIndex - 1).json.kosztUsd) || 0; } catch (e) {}\n}\nreturn [{ json: {\n  doc: parsed.data,\n  model: parsed.model,\n  usage: parsed.usage,\n  kosztUsd: Math.round(kosztUsd * 100000) / 100000,\n  key: documentKey(parsed.data),\n} }];\n"
+      },
+      "id": "df855557-597f-c59a-e324-cf37c7529f70",
+      "name": "Odczytaj odpowiedź",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dokumenty",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "klucz",
+              "lookupValue": "={{ $json.key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d1f83e2d-cfbd-0494-262a-a1991e713f24",
+      "name": "Sprawdź duplikaty",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1600,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/validate.js =====\n// Deterministyczna walidacja odczytanego dokumentu.\n// Wszystkie obliczenia w groszach (liczby całkowite) — bez błędów zmiennoprzecinkowych.\n// Wklejany do węzła Code w n8n przez scripts/build_workflows.mjs.\n\nconst DEFAULT_VALIDATION_OPTIONS = {\n  tolLineGr: 2, // tolerancja zaokrągleń na pozycji (ilość × cena)\n  tolDocGr: 5, // tolerancja na poziomie dokumentu (sumy, tabela VAT)\n  minPewnosc: 0.8,\n  nipFirmy: '', // NIP naszej firmy — ostrzeżenie, gdy dokument wystawiono na inny podmiot\n  existingKeys: [], // klucze dokumentów już obecnych w rejestrze (wykrywanie duplikatów)\n  today: null, // 'RRRR-MM-DD' — do testów; domyślnie bieżąca data\n};\n\nconst PL_VAT_RATES = { '23': 23, '8': 8, '5': 5, '0': 0, zw: 0, np: 0, oo: 0 };\n\nfunction toGr(value) {\n  if (value === null || value === undefined || value === '') return null;\n  const n = typeof value === 'number' ? value : Number(String(value).replace(/\\s/g, '').replace(',', '.'));\n  if (!Number.isFinite(n)) return null;\n  return Math.round(n * 100);\n}\n\nfunction fmtGr(gr) {\n  if (gr === null || gr === undefined) return '—';\n  const sign = gr < 0 ? '-' : '';\n  const abs = Math.abs(gr);\n  const zl = Math.floor(abs / 100)\n    .toString()\n    .replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' ');\n  return `${sign}${zl},${String(abs % 100).padStart(2, '0')}`;\n}\n\nfunction normalizeRate(rate) {\n  if (rate === null || rate === undefined) return null;\n  let r = String(rate).trim().toLowerCase().replace('%', '').replace(',', '.');\n  if (r === 'zw.' || r === 'zwol' || r === 'zwolniona') r = 'zw';\n  if (r === 'n.p.' || r === 'np.' || r === 'nie podlega') r = 'np';\n  if (r === 'o.o.' || r === 'oo.') r = 'oo';\n  const num = Number(r);\n  if (Number.isFinite(num)) {\n    // 0.23 -> 23\n    const pct = num > 0 && num < 1 ? num * 100 : num;\n    return String(Math.round(pct * 100) / 100);\n  }\n  return r;\n}\n\nfunction rateValue(rate) {\n  if (rate in PL_VAT_RATES) return PL_VAT_RATES[rate];\n  const n = Number(rate);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction normalizeNip(nip) {\n  if (!nip) return { digits: '', prefix: '' };\n  const s = String(nip).toUpperCase().replace(/[\\s-]/g, '');\n  const m = s.match(/^([A-Z]{2})?(.*)$/);\n  return { prefix: m[1] || '', digits: m[2].replace(/[^0-9A-Z]/g, '') };\n}\n\nfunction isValidPlNip(digits) {\n  if (!/^\\d{10}$/.test(digits)) return false;\n  const w = [6, 5, 7, 2, 3, 4, 5, 6, 7];\n  const sum = w.reduce((acc, wi, i) => acc + wi * Number(digits[i]), 0);\n  const ctrl = sum % 11;\n  return ctrl !== 10 && ctrl === Number(digits[9]);\n}\n\nfunction isPolish(podmiot, nipPrefix) {\n  const kraj = (podmiot && podmiot.kraj ? String(podmiot.kraj) : '').toUpperCase();\n  if (nipPrefix && nipPrefix !== 'PL') return false;\n  return !kraj || kraj === 'PL' || kraj === 'POLSKA';\n}\n\nfunction isIsoDate(s) {\n  if (typeof s !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return false;\n  const d = new Date(s + 'T00:00:00Z');\n  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;\n}\n\nfunction documentKey(doc) {\n  const { digits } = normalizeNip(doc && doc.sprzedawca && doc.sprzedawca.nip);\n  const numer = String((doc && doc.numer) || '')\n    .toUpperCase()\n    .replace(/\\s+/g, '');\n  return `${digits || 'BRAK-NIP'}|${numer || 'BRAK-NUMERU'}`;\n}\n\n/**\n * Główna funkcja walidacji.\n * Zwraca { ok, errors[], warnings[], needsRetry, key, totals }.\n * errors/warnings: { code, message, retryable }\n */\nfunction validateDocument(doc, userOptions) {\n  const opt = Object.assign({}, DEFAULT_VALIDATION_OPTIONS, userOptions || {});\n  const errors = [];\n  const warnings = [];\n  const err = (code, message, retryable = true) => errors.push({ code, message, retryable });\n  const warn = (code, message) => warnings.push({ code, message, retryable: false });\n\n  if (!doc || typeof doc !== 'object') {\n    err('BRAK_DANYCH', 'Brak odczytanych danych dokumentu.');\n    return { ok: false, errors, warnings, needsRetry: true, key: null, totals: null };\n  }\n\n  const typ = doc.typ_dokumentu;\n  const isInvoice = typ === 'FAKTURA' || typ === 'FAKTURA_KOREKTA';\n  const isKorekta = typ === 'FAKTURA_KOREKTA';\n  const pozycje = Array.isArray(doc.pozycje) ? doc.pozycje : [];\n  const podsumowanie = Array.isArray(doc.podsumowanie_vat) ? doc.podsumowanie_vat : [];\n\n  // --- 1. Typ i pola wymagane -------------------------------------------------\n  if (!typ || typ === 'INNY') {\n    err('TYP_NIEROZPOZNANY', 'Nie rozpoznano typu dokumentu (FV / WZ / zamówienie).', false);\n  }\n  if (!doc.numer) err('BRAK_NUMERU', 'Brak numeru dokumentu.');\n  if (!doc.data_wystawienia) err('BRAK_DATY', 'Brak daty wystawienia.');\n  if (!doc.sprzedawca || !doc.sprzedawca.nazwa) err('BRAK_KONTRAHENTA', 'Brak nazwy kontrahenta (sprzedawcy/dostawcy).');\n\n  if (isInvoice || typ === 'PARAGON') {\n    if (toGr(doc.suma_brutto) === null) err('BRAK_SUMY', 'Brak kwoty brutto do zapłaty w podsumowaniu.');\n  }\n  if (isInvoice && pozycje.length === 0) err('BRAK_POZYCJI', 'Faktura nie zawiera żadnych odczytanych pozycji.');\n  if (typ === 'WZ' || typ === 'ZAMOWIENIE') {\n    if (pozycje.length === 0) err('BRAK_POZYCJI', 'Dokument nie zawiera żadnych odczytanych pozycji.');\n    pozycje.forEach((p, i) => {\n      const q = Number(p.ilosc);\n      if (!p.ilosc || !Number.isFinite(q) || q === 0) {\n        err('BRAK_ILOSCI', `Pozycja ${p.lp || i + 1} („${p.nazwa}”): brak ilości.`);\n      }\n    });\n  }\n\n  // --- 2. Daty ------------------------------------------------------------------\n  const today = opt.today || new Date().toISOString().slice(0, 10);\n  for (const field of ['data_wystawienia', 'data_sprzedazy', 'termin_platnosci']) {\n    const v = doc[field];\n    if (v && !isIsoDate(v)) err('ZLA_DATA', `Nieprawidłowa data w polu ${field}: „${v}”.`);\n  }\n  if (isIsoDate(doc.data_wystawienia)) {\n    const days = (Date.parse(doc.data_wystawienia) - Date.parse(today)) / 86400000;\n    if (days > 1) warn('DATA_PRZYSZLA', `Data wystawienia ${doc.data_wystawienia} jest w przyszłości.`);\n    if (days < -365) warn('DATA_STARA', `Data wystawienia ${doc.data_wystawienia} jest starsza niż rok.`);\n  }\n\n  // --- 3. NIP -------------------------------------------------------------------\n  const seller = normalizeNip(doc.sprzedawca && doc.sprzedawca.nip);\n  if (isInvoice) {\n    if (!seller.digits) {\n      err('BRAK_NIP', 'Brak NIP sprzedawcy.');\n    } else if (isPolish(doc.sprzedawca, seller.prefix)) {\n      if (!isValidPlNip(seller.digits)) err('ZLY_NIP', `NIP sprzedawcy ${seller.digits} ma błędną sumę kontrolną.`);\n    } else {\n      warn('KONTRAHENT_ZAGRANICZNY', `Sprzedawca zagraniczny (${seller.prefix || doc.sprzedawca.kraj} ${seller.digits}) — sprawdź rodzaj transakcji (WNT/import usług).`);\n    }\n  } else if (seller.digits && isPolish(doc.sprzedawca, seller.prefix) && !isValidPlNip(seller.digits)) {\n    warn('ZLY_NIP', `NIP kontrahenta ${seller.digits} ma błędną sumę kontrolną.`);\n  }\n  const buyer = normalizeNip(doc.nabywca && doc.nabywca.nip);\n  if (buyer.digits && isPolish(doc.nabywca, buyer.prefix) && !isValidPlNip(buyer.digits)) {\n    warn('ZLY_NIP_NABYWCY', `NIP nabywcy ${buyer.digits} ma błędną sumę kontrolną.`);\n  }\n  const nipFirmy = normalizeNip(opt.nipFirmy).digits;\n  if (isInvoice && nipFirmy && buyer.digits && buyer.digits !== nipFirmy) {\n    warn('INNY_NABYWCA', `Nabywca na fakturze (NIP ${buyer.digits}) to nie nasza firma (NIP ${nipFirmy}).`);\n  }\n\n  // --- 4. Waluta, pewność ----------------------------------------------------\n  if (doc.waluta && String(doc.waluta).toUpperCase() !== 'PLN') {\n    warn('WALUTA_OBCA', `Dokument w walucie ${doc.waluta} — wymaga przeliczenia kursem NBP.`);\n  }\n  const pewnosc = Number(doc.pewnosc);\n  const lowConfidence = Number.isFinite(pewnosc) && pewnosc < opt.minPewnosc;\n  if (lowConfidence) warn('NISKA_PEWNOSC', `Model ocenił pewność odczytu na ${pewnosc} (< ${opt.minPewnosc}).`);\n\n  // --- 5. Pozycje: ilość × cena, netto + VAT = brutto -------------------------\n  const byRate = {}; // stawka -> { netto, vat, brutto, nettoKnown, bruttoKnown }\n  let linesNetto = 0;\n  let linesBrutto = 0;\n  let allLinesHaveNetto = pozycje.length > 0;\n  let allLinesHaveBrutto = pozycje.length > 0;\n  let anyAmounts = false;\n\n  pozycje.forEach((p, i) => {\n    const label = `Pozycja ${p.lp || i + 1} („${String(p.nazwa || '').slice(0, 40)}”)`;\n    const netto = toGr(p.wartosc_netto);\n    const vat = toGr(p.kwota_vat);\n    const brutto = toGr(p.wartosc_brutto);\n    const rate = normalizeRate(p.stawka_vat);\n    const qty = Number(p.ilosc);\n    const price = p.cena_netto === null || p.cena_netto === undefined ? null : Number(p.cena_netto);\n\n    if (netto !== null || brutto !== null) anyAmounts = true;\n    if (netto === null) allLinesHaveNetto = false;\n    else linesNetto += netto;\n    if (brutto === null) allLinesHaveBrutto = false;\n    else linesBrutto += brutto;\n\n    if (netto !== null && price !== null && Number.isFinite(price) && Number.isFinite(qty) && p.ilosc !== null) {\n      const expected = Math.round(qty * price * 100);\n      if (Math.abs(expected - netto) > opt.tolLineGr) {\n        err('POZYCJA_ILOSC_CENA', `${label}: ${qty} × ${fmtGr(Math.round(price * 100))} = ${fmtGr(expected)}, a wartość netto na dokumencie to ${fmtGr(netto)}.`);\n      }\n    }\n    if (netto !== null && vat !== null && brutto !== null && Math.abs(netto + vat - brutto) > opt.tolLineGr) {\n      err('POZYCJA_BRUTTO', `${label}: netto ${fmtGr(netto)} + VAT ${fmtGr(vat)} ≠ brutto ${fmtGr(brutto)}.`);\n    }\n    if (rate !== null && rateValue(rate) === null) {\n      warn('NIEZNANA_STAWKA', `${label}: nierozpoznana stawka VAT „${p.stawka_vat}”.`);\n    } else if (rate !== null && !(rate in PL_VAT_RATES)) {\n      warn('STAWKA_NIETYPOWA', `${label}: stawka VAT ${rate}% nie jest stawką krajową.`);\n    }\n    if (isInvoice && rate === null && (netto !== null || brutto !== null)) {\n      err('BRAK_STAWKI', `${label}: brak stawki VAT.`);\n    }\n\n    if (rate !== null) {\n      const g = (byRate[rate] = byRate[rate] || { netto: 0, vat: 0, brutto: 0, nettoKnown: true, bruttoKnown: true });\n      if (netto === null) g.nettoKnown = false;\n      else g.netto += netto;\n      if (brutto === null) g.bruttoKnown = false;\n      else g.brutto += brutto;\n      if (vat !== null) g.vat += vat;\n    }\n  });\n\n  // --- 6. Podsumowanie dokumentu (weryfikacja bezwarunkowa) --------------------\n  const sumaNetto = toGr(doc.suma_netto);\n  const sumaVat = toGr(doc.suma_vat);\n  const sumaBrutto = toGr(doc.suma_brutto);\n  const hasSummaryAmounts = sumaNetto !== null || sumaBrutto !== null;\n  // WZ / zamówienie bez kwot: sprawdzamy tylko ilości.\n  const checkMath = isInvoice || typ === 'PARAGON' || anyAmounts || hasSummaryAmounts;\n\n  if (checkMath) {\n    // 6a. Suma pozycji vs podsumowanie dokumentu\n    if (allLinesHaveNetto && sumaNetto !== null) {\n      if (Math.abs(linesNetto - sumaNetto) > opt.tolDocGr) {\n        err('SUMA_NETTO', `Suma netto pozycji ${fmtGr(linesNetto)} ≠ netto w podsumowaniu ${fmtGr(sumaNetto)} (różnica ${fmtGr(linesNetto - sumaNetto)}).`);\n      }\n    } else if (allLinesHaveBrutto && sumaBrutto !== null) {\n      if (Math.abs(linesBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('SUMA_BRUTTO_POZYCJI', `Suma brutto pozycji ${fmtGr(linesBrutto)} ≠ brutto w podsumowaniu ${fmtGr(sumaBrutto)} (różnica ${fmtGr(linesBrutto - sumaBrutto)}).`);\n      }\n    } else if (pozycje.length > 0 && isInvoice) {\n      err('POZYCJE_BEZ_KWOT', 'Nie da się zsumować pozycji — brak wartości netto/brutto na części pozycji.');\n    }\n\n    if (allLinesHaveBrutto && sumaBrutto !== null && allLinesHaveNetto && sumaNetto !== null) {\n      if (Math.abs(linesBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('SUMA_BRUTTO_POZYCJI', `Suma brutto pozycji ${fmtGr(linesBrutto)} ≠ brutto w podsumowaniu ${fmtGr(sumaBrutto)}.`);\n      }\n    }\n\n    // 6b. netto + VAT = brutto dla całego dokumentu\n    if (sumaNetto !== null && sumaVat !== null && sumaBrutto !== null) {\n      if (Math.abs(sumaNetto + sumaVat - sumaBrutto) > 1) {\n        err('SUMA_NETTO_VAT_BRUTTO', `Podsumowanie: netto ${fmtGr(sumaNetto)} + VAT ${fmtGr(sumaVat)} ≠ brutto ${fmtGr(sumaBrutto)}.`);\n      }\n    } else if (isInvoice && (sumaNetto === null || sumaVat === null)) {\n      warn('NIEPELNE_PODSUMOWANIE', 'Podsumowanie nie zawiera osobno kwot netto i VAT.');\n    }\n\n    // 6c. Tabela VAT wg stawek\n    if (podsumowanie.length > 0) {\n      let tNetto = 0;\n      let tVat = 0;\n      let tBrutto = 0;\n      let tNettoOk = true;\n      let tVatOk = true;\n      let tBruttoOk = true;\n      const seenRates = new Set();\n\n      podsumowanie.forEach((row) => {\n        const rate = normalizeRate(row.stawka_vat);\n        seenRates.add(rate);\n        const n = toGr(row.netto);\n        const v = toGr(row.vat);\n        const b = toGr(row.brutto);\n        if (n === null) tNettoOk = false;\n        else tNetto += n;\n        if (v === null) tVatOk = false;\n        else tVat += v;\n        if (b === null) tBruttoOk = false;\n        else tBrutto += b;\n\n        if (n !== null && v !== null && b !== null && Math.abs(n + v - b) > 1) {\n          err('VAT_WIERSZ', `Tabela VAT, stawka ${rate}: netto ${fmtGr(n)} + VAT ${fmtGr(v)} ≠ brutto ${fmtGr(b)}.`);\n        }\n        const rv = rateValue(rate);\n        if (n !== null && v !== null && rv !== null) {\n          // VAT liczony od netto (lub od brutto — wtedy dopuszczamy większą różnicę zaokrągleń)\n          const expectedVat = Math.round((n * rv) / 100);\n          const tol = doc.metoda_liczenia_vat === 'od_brutto' ? opt.tolDocGr : Math.max(1, opt.tolLineGr);\n          if (Math.abs(expectedVat - v) > tol) {\n            err('VAT_STAWKA', `Tabela VAT, stawka ${rate}: ${rv}% od ${fmtGr(n)} to ${fmtGr(expectedVat)}, a na dokumencie VAT = ${fmtGr(v)}.`);\n          }\n        }\n        const g = byRate[rate];\n        if (g && n !== null && g.nettoKnown && Math.abs(g.netto - n) > opt.tolDocGr) {\n          err('VAT_POZYCJE', `Stawka ${rate}: suma netto pozycji ${fmtGr(g.netto)} ≠ netto w tabeli VAT ${fmtGr(n)}.`);\n        } else if (g && b !== null && !g.nettoKnown && g.bruttoKnown && Math.abs(g.brutto - b) > opt.tolDocGr) {\n          err('VAT_POZYCJE', `Stawka ${rate}: suma brutto pozycji ${fmtGr(g.brutto)} ≠ brutto w tabeli VAT ${fmtGr(b)}.`);\n        }\n      });\n\n      Object.keys(byRate).forEach((rate) => {\n        if (!seenRates.has(rate)) {\n          err('VAT_BRAK_STAWKI', `Pozycje zawierają stawkę ${rate}, której nie ma w tabeli podsumowania VAT.`);\n        }\n      });\n\n      if (tNettoOk && sumaNetto !== null && Math.abs(tNetto - sumaNetto) > opt.tolDocGr) {\n        err('VAT_SUMA_NETTO', `Suma netto tabeli VAT ${fmtGr(tNetto)} ≠ netto dokumentu ${fmtGr(sumaNetto)}.`);\n      }\n      if (tVatOk && sumaVat !== null && Math.abs(tVat - sumaVat) > opt.tolDocGr) {\n        err('VAT_SUMA_VAT', `Suma VAT tabeli ${fmtGr(tVat)} ≠ VAT dokumentu ${fmtGr(sumaVat)}.`);\n      }\n      if (tBruttoOk && sumaBrutto !== null && Math.abs(tBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('VAT_SUMA_BRUTTO', `Suma brutto tabeli VAT ${fmtGr(tBrutto)} ≠ brutto dokumentu ${fmtGr(sumaBrutto)}.`);\n      }\n    } else if (isInvoice && sumaNetto !== null && sumaVat !== null) {\n      // Brak tabeli VAT: VAT dokumentu musi się zgadzać z VAT wyliczonym z pozycji.\n      let expectedVat = 0;\n      let computable = true;\n      Object.keys(byRate).forEach((rate) => {\n        const rv = rateValue(rate);\n        if (rv === null || !byRate[rate].nettoKnown) computable = false;\n        else expectedVat += Math.round((byRate[rate].netto * rv) / 100);\n      });\n      if (computable && Object.keys(byRate).length > 0 && Math.abs(expectedVat - sumaVat) > opt.tolDocGr) {\n        err('VAT_WYLICZONY', `VAT wyliczony z pozycji ${fmtGr(expectedVat)} ≠ VAT na dokumencie ${fmtGr(sumaVat)}.`);\n      }\n    }\n\n    // 6d. Do zapłaty\n    const doZaplaty = toGr(doc.do_zaplaty);\n    if (doZaplaty !== null && sumaBrutto !== null && doZaplaty !== sumaBrutto && !isKorekta) {\n      warn('DO_ZAPLATY', `Kwota do zapłaty ${fmtGr(doZaplaty)} różni się od brutto ${fmtGr(sumaBrutto)} (zaliczka? częściowa płatność?).`);\n    }\n    if (!isKorekta && sumaBrutto !== null && sumaBrutto < 0) {\n      warn('KWOTA_UJEMNA', 'Ujemna kwota brutto na dokumencie, który nie jest korektą.');\n    }\n  }\n\n  // --- 7. Duplikaty ---------------------------------------------------------------\n  const key = documentKey(doc);\n  if (doc.numer && (opt.existingKeys || []).includes(key)) {\n    err('DUPLIKAT', `Dokument ${doc.numer} od kontrahenta NIP ${seller.digits || '—'} jest już w rejestrze.`, false);\n  }\n\n  const needsRetry = errors.some((e) => e.retryable) || lowConfidence;\n  return {\n    ok: errors.length === 0,\n    errors,\n    warnings,\n    needsRetry,\n    key,\n    totals: {\n      pozycje_netto: allLinesHaveNetto ? linesNetto / 100 : null,\n      pozycje_brutto: allLinesHaveBrutto ? linesBrutto / 100 : null,\n    },\n  };\n}\n\n// ===== src/extraction.js =====\n// Ekstrakcja danych z dokumentu przez Claude (Messages API).\n// Ten plik jest wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs,\n// dlatego nie używa require/import — tylko czyste funkcje.\n\nconst EXTRACTION_SYSTEM_PROMPT = `Jesteś asystentem działu księgowości polskiej firmy. Odczytujesz dokumenty kosztowe (faktury zakupowe, korekty, dokumenty WZ, zamówienia, paragony) ze skanów, zdjęć i plików PDF.\n\nZasady:\n1. PRZEPISUJ wartości dokładnie tak, jak są wydrukowane na dokumencie. Niczego nie przeliczaj, nie poprawiaj i nie uzupełniaj sum na podstawie pozycji — poprawność matematyczną sprawdza osobny, deterministyczny etap. Jeśli suma na dokumencie jest błędna, przepisz ją taką, jaka jest.\n2. Jeżeli pola nie ma na dokumencie albo jest nieczytelne: dla pól tekstowych zwróć pusty tekst \"\", dla liczb null. Nie zgaduj. Nieczytelne fragmenty opisz w polu \"uwagi\".\n3. Kwoty zwracaj jako liczby z kropką dziesiętną (1 234,56 zł -> 1234.56). Ilości również jako liczby.\n4. Daty w formacie RRRR-MM-DD.\n5. NIP przepisz DOKŁADNIE tak, jak jest wydrukowany — znak po znaku, razem z kreskami, spacjami i ewentualnym prefiksem kraju (np. \"123-456-32-18\", \"PL 1234563218\", \"DE123456789\"). Niczego nie usuwaj ani nie scalaj — normalizację robi system. Kraj kontrahenta podaj w polu \"kraj\" jako kod ISO (PL, DE, ...).\n6. Stawka VAT jako tekst: \"23\", \"8\", \"5\", \"0\", \"zw\" (zwolniona), \"np\" (nie podlega), \"oo\" (odwrotne obciążenie). Stawki zagraniczne podaj liczbą, np. \"19\".\n7. \"cena_netto\" to cena jednostkowa netto PO rabacie. Jeśli dokument podaje tylko ceny brutto, wpisz cena_netto = null i uzupełnij wartości brutto; ustaw \"metoda_liczenia_vat\" = \"od_brutto\".\n8. \"podsumowanie_vat\" to tabela podsumowania według stawek VAT wydrukowana na dokumencie (jeśli jej nie ma — pusta lista).\n9. \"sprzedawca\" to wystawca faktury (dostawca). Na WZ — wydający towar. Na zamówieniu — dostawca, do którego kierowane jest zamówienie.\n10. \"typ_dokumentu\": FAKTURA, FAKTURA_KOREKTA, WZ (wydanie zewnętrzne / dowód dostawy), ZAMOWIENIE, PARAGON albo INNY.\n11. \"pewnosc\" (0–1): Twoja ocena, na ile odczyt całego dokumentu jest wiarygodny (jakość skanu, czytelność liczb).\n12. Dokument wielostronicowy traktuj jako jeden dokument; pozycje ze wszystkich stron w jednej liście.`;\n\nconst EXTRACTION_USER_PROMPT = 'Odczytaj dane z załączonego dokumentu zgodnie ze schematem.';\n\nfunction nullable(schema) {\n  return { anyOf: [schema, { type: 'null' }] };\n}\n\nfunction strictObject(properties) {\n  return {\n    type: 'object',\n    properties,\n    required: Object.keys(properties),\n    additionalProperties: false,\n  };\n}\n\n// API structured outputs pozwala na max 16 pól z typem „union” (np. liczba lub null).\n// Dlatego pola tekstowe są zawsze stringami (\"\" = brak — zamieniane na null w parseClaudeResponse),\n// a null dopuszczamy tylko dla kwot i ilości.\nconst NSTR = { type: 'string' };\nconst NNUM = nullable({ type: 'number' });\nconst MAX_UNION_FIELDS = 16;\n\nconst PODMIOT_SCHEMA = strictObject({\n  nazwa: NSTR,\n  nip: NSTR,\n  kraj: NSTR,\n  ulica: NSTR,\n  kod_pocztowy: NSTR,\n  miasto: NSTR,\n});\n\nconst EXTRACTION_SCHEMA = strictObject({\n  typ_dokumentu: {\n    type: 'string',\n    enum: ['FAKTURA', 'FAKTURA_KOREKTA', 'WZ', 'ZAMOWIENIE', 'PARAGON', 'INNY'],\n  },\n  numer: NSTR,\n  data_wystawienia: NSTR,\n  data_sprzedazy: NSTR,\n  termin_platnosci: NSTR,\n  forma_platnosci: NSTR,\n  waluta: NSTR,\n  numer_dokumentu_powiazanego: NSTR,\n  sprzedawca: PODMIOT_SCHEMA,\n  nabywca: PODMIOT_SCHEMA,\n  metoda_liczenia_vat: { type: 'string', enum: ['od_netto', 'od_brutto', 'nieznana'] },\n  pozycje: {\n    type: 'array',\n    items: strictObject({\n      lp: { type: 'number' },\n      nazwa: { type: 'string' },\n      kod: NSTR,\n      ilosc: NNUM,\n      jm: NSTR,\n      cena_netto: NNUM,\n      stawka_vat: NSTR,\n      wartosc_netto: NNUM,\n      kwota_vat: NNUM,\n      wartosc_brutto: NNUM,\n    }),\n  },\n  podsumowanie_vat: {\n    type: 'array',\n    items: strictObject({\n      stawka_vat: { type: 'string' },\n      netto: NNUM,\n      vat: NNUM,\n      brutto: NNUM,\n    }),\n  },\n  suma_netto: NNUM,\n  suma_vat: NNUM,\n  suma_brutto: NNUM,\n  do_zaplaty: NNUM,\n  pewnosc: { type: 'number' },\n  uwagi: NSTR,\n});\n\nconst MODEL_PRIMARY = 'claude-haiku-4-5';\nconst MODEL_FALLBACK = 'claude-sonnet-5';\n\n/**\n * Buduje body żądania POST /v1/messages.\n * mediaType: application/pdf | image/jpeg | image/png | image/webp | image/gif\n */\nfunction buildClaudeRequest({ base64, mediaType, model }) {\n  const isPdf = mediaType === 'application/pdf';\n  const fileBlock = isPdf\n    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }\n    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };\n\n  const outputConfig = { format: { type: 'json_schema', schema: EXTRACTION_SCHEMA } };\n  // Haiku 4.5 nie obsługuje parametru effort; na Sonnet 5 ograniczamy myślenie,\n  // bo to przepisywanie danych, nie rozumowanie.\n  if (model !== MODEL_PRIMARY) outputConfig.effort = 'medium';\n\n  return {\n    model,\n    max_tokens: 16000,\n    system: EXTRACTION_SYSTEM_PROMPT,\n    messages: [\n      { role: 'user', content: [fileBlock, { type: 'text', text: EXTRACTION_USER_PROMPT }] },\n    ],\n    output_config: outputConfig,\n  };\n}\n\n// \"\" -> null w całym obiekcie (pola tekstowe bez wartości)\nfunction emptyToNull(value) {\n  if (value === '') return null;\n  if (Array.isArray(value)) return value.map(emptyToNull);\n  if (value && typeof value === 'object') {\n    const out = {};\n    for (const [k, v] of Object.entries(value)) out[k] = emptyToNull(v);\n    return out;\n  }\n  return value;\n}\n\n/**\n * Wyciąga dane z odpowiedzi API. Rzuca błąd, gdy odpowiedź nie nadaje się do użycia.\n */\nfunction parseClaudeResponse(response) {\n  if (!response || !Array.isArray(response.content)) {\n    throw new Error('Nieprawidłowa odpowiedź API Claude: ' + JSON.stringify(response).slice(0, 500));\n  }\n  if (response.stop_reason === 'max_tokens') {\n    throw new Error('Odpowiedź Claude ucięta (max_tokens) — dokument zbyt długi.');\n  }\n  if (response.stop_reason === 'refusal') {\n    throw new Error('Claude odmówił przetworzenia dokumentu.');\n  }\n  const textBlock = response.content.find((b) => b.type === 'text');\n  if (!textBlock) throw new Error('Brak bloku tekstowego w odpowiedzi Claude.');\n  const data = emptyToNull(JSON.parse(textBlock.text));\n  return {\n    data,\n    model: response.model,\n    usage: response.usage || {},\n  };\n}\n\n// Koszt w USD wg cennika (za 1 mln tokenów) — do logowania w rejestrze.\nconst MODEL_PRICING = {\n  'claude-haiku-4-5': { input: 1.0, output: 5.0 },\n  'claude-sonnet-5': { input: 2.0, output: 10.0 },\n};\n\nfunction estimateCostUsd(model, usage) {\n  const key = Object.keys(MODEL_PRICING).find((m) => (model || '').startsWith(m));\n  if (!key || !usage) return null;\n  const p = MODEL_PRICING[key];\n  const cost = ((usage.input_tokens || 0) * p.input + (usage.output_tokens || 0) * p.output) / 1e6;\n  return Math.round(cost * 100000) / 100000;\n}\n\n// ===== logika węzła =====\nconst cfg = $('Konfiguracja').first().json;\nconst r = $('Odczytaj odpowiedź').first().json;\nconst existingKeys = $input.all().map((i) => i.json && i.json.klucz).filter(Boolean).map(String);\nconst validation = validateDocument(r.doc, {\n  tolLineGr: Number(cfg.tolLineGr),\n  tolDocGr: Number(cfg.tolDocGr),\n  minPewnosc: Number(cfg.minPewnosc),\n  nipFirmy: cfg.nipFirmy,\n  existingKeys,\n});\n// Jedna ponowna próba mocniejszym modelem, gdy błąd może wynikać ze złego odczytu.\nconst retry = validation.needsRetry && !String(r.model).startsWith(MODEL_FALLBACK);\nreturn [{ json: Object.assign({}, r, { validation, retry }) }];\n"
+      },
+      "id": "9f868c55-6967-434e-14bb-7241a1bd471f",
+      "name": "Walidacja matematyczna",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "195a7bda-82cf-7818-ce4d-59a1869c8178",
+              "leftValue": "={{ $json.retry }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "195a7bda-82cf-7818-ce4d-59a1869c8178",
+      "name": "Ponowić modelem Sonnet?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/extraction.js =====\n// Ekstrakcja danych z dokumentu przez Claude (Messages API).\n// Ten plik jest wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs,\n// dlatego nie używa require/import — tylko czyste funkcje.\n\nconst EXTRACTION_SYSTEM_PROMPT = `Jesteś asystentem działu księgowości polskiej firmy. Odczytujesz dokumenty kosztowe (faktury zakupowe, korekty, dokumenty WZ, zamówienia, paragony) ze skanów, zdjęć i plików PDF.\n\nZasady:\n1. PRZEPISUJ wartości dokładnie tak, jak są wydrukowane na dokumencie. Niczego nie przeliczaj, nie poprawiaj i nie uzupełniaj sum na podstawie pozycji — poprawność matematyczną sprawdza osobny, deterministyczny etap. Jeśli suma na dokumencie jest błędna, przepisz ją taką, jaka jest.\n2. Jeżeli pola nie ma na dokumencie albo jest nieczytelne: dla pól tekstowych zwróć pusty tekst \"\", dla liczb null. Nie zgaduj. Nieczytelne fragmenty opisz w polu \"uwagi\".\n3. Kwoty zwracaj jako liczby z kropką dziesiętną (1 234,56 zł -> 1234.56). Ilości również jako liczby.\n4. Daty w formacie RRRR-MM-DD.\n5. NIP przepisz DOKŁADNIE tak, jak jest wydrukowany — znak po znaku, razem z kreskami, spacjami i ewentualnym prefiksem kraju (np. \"123-456-32-18\", \"PL 1234563218\", \"DE123456789\"). Niczego nie usuwaj ani nie scalaj — normalizację robi system. Kraj kontrahenta podaj w polu \"kraj\" jako kod ISO (PL, DE, ...).\n6. Stawka VAT jako tekst: \"23\", \"8\", \"5\", \"0\", \"zw\" (zwolniona), \"np\" (nie podlega), \"oo\" (odwrotne obciążenie). Stawki zagraniczne podaj liczbą, np. \"19\".\n7. \"cena_netto\" to cena jednostkowa netto PO rabacie. Jeśli dokument podaje tylko ceny brutto, wpisz cena_netto = null i uzupełnij wartości brutto; ustaw \"metoda_liczenia_vat\" = \"od_brutto\".\n8. \"podsumowanie_vat\" to tabela podsumowania według stawek VAT wydrukowana na dokumencie (jeśli jej nie ma — pusta lista).\n9. \"sprzedawca\" to wystawca faktury (dostawca). Na WZ — wydający towar. Na zamówieniu — dostawca, do którego kierowane jest zamówienie.\n10. \"typ_dokumentu\": FAKTURA, FAKTURA_KOREKTA, WZ (wydanie zewnętrzne / dowód dostawy), ZAMOWIENIE, PARAGON albo INNY.\n11. \"pewnosc\" (0–1): Twoja ocena, na ile odczyt całego dokumentu jest wiarygodny (jakość skanu, czytelność liczb).\n12. Dokument wielostronicowy traktuj jako jeden dokument; pozycje ze wszystkich stron w jednej liście.`;\n\nconst EXTRACTION_USER_PROMPT = 'Odczytaj dane z załączonego dokumentu zgodnie ze schematem.';\n\nfunction nullable(schema) {\n  return { anyOf: [schema, { type: 'null' }] };\n}\n\nfunction strictObject(properties) {\n  return {\n    type: 'object',\n    properties,\n    required: Object.keys(properties),\n    additionalProperties: false,\n  };\n}\n\n// API structured outputs pozwala na max 16 pól z typem „union” (np. liczba lub null).\n// Dlatego pola tekstowe są zawsze stringami (\"\" = brak — zamieniane na null w parseClaudeResponse),\n// a null dopuszczamy tylko dla kwot i ilości.\nconst NSTR = { type: 'string' };\nconst NNUM = nullable({ type: 'number' });\nconst MAX_UNION_FIELDS = 16;\n\nconst PODMIOT_SCHEMA = strictObject({\n  nazwa: NSTR,\n  nip: NSTR,\n  kraj: NSTR,\n  ulica: NSTR,\n  kod_pocztowy: NSTR,\n  miasto: NSTR,\n});\n\nconst EXTRACTION_SCHEMA = strictObject({\n  typ_dokumentu: {\n    type: 'string',\n    enum: ['FAKTURA', 'FAKTURA_KOREKTA', 'WZ', 'ZAMOWIENIE', 'PARAGON', 'INNY'],\n  },\n  numer: NSTR,\n  data_wystawienia: NSTR,\n  data_sprzedazy: NSTR,\n  termin_platnosci: NSTR,\n  forma_platnosci: NSTR,\n  waluta: NSTR,\n  numer_dokumentu_powiazanego: NSTR,\n  sprzedawca: PODMIOT_SCHEMA,\n  nabywca: PODMIOT_SCHEMA,\n  metoda_liczenia_vat: { type: 'string', enum: ['od_netto', 'od_brutto', 'nieznana'] },\n  pozycje: {\n    type: 'array',\n    items: strictObject({\n      lp: { type: 'number' },\n      nazwa: { type: 'string' },\n      kod: NSTR,\n      ilosc: NNUM,\n      jm: NSTR,\n      cena_netto: NNUM,\n      stawka_vat: NSTR,\n      wartosc_netto: NNUM,\n      kwota_vat: NNUM,\n      wartosc_brutto: NNUM,\n    }),\n  },\n  podsumowanie_vat: {\n    type: 'array',\n    items: strictObject({\n      stawka_vat: { type: 'string' },\n      netto: NNUM,\n      vat: NNUM,\n      brutto: NNUM,\n    }),\n  },\n  suma_netto: NNUM,\n  suma_vat: NNUM,\n  suma_brutto: NNUM,\n  do_zaplaty: NNUM,\n  pewnosc: { type: 'number' },\n  uwagi: NSTR,\n});\n\nconst MODEL_PRIMARY = 'claude-haiku-4-5';\nconst MODEL_FALLBACK = 'claude-sonnet-5';\n\n/**\n * Buduje body żądania POST /v1/messages.\n * mediaType: application/pdf | image/jpeg | image/png | image/webp | image/gif\n */\nfunction buildClaudeRequest({ base64, mediaType, model }) {\n  const isPdf = mediaType === 'application/pdf';\n  const fileBlock = isPdf\n    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }\n    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };\n\n  const outputConfig = { format: { type: 'json_schema', schema: EXTRACTION_SCHEMA } };\n  // Haiku 4.5 nie obsługuje parametru effort; na Sonnet 5 ograniczamy myślenie,\n  // bo to przepisywanie danych, nie rozumowanie.\n  if (model !== MODEL_PRIMARY) outputConfig.effort = 'medium';\n\n  return {\n    model,\n    max_tokens: 16000,\n    system: EXTRACTION_SYSTEM_PROMPT,\n    messages: [\n      { role: 'user', content: [fileBlock, { type: 'text', text: EXTRACTION_USER_PROMPT }] },\n    ],\n    output_config: outputConfig,\n  };\n}\n\n// \"\" -> null w całym obiekcie (pola tekstowe bez wartości)\nfunction emptyToNull(value) {\n  if (value === '') return null;\n  if (Array.isArray(value)) return value.map(emptyToNull);\n  if (value && typeof value === 'object') {\n    const out = {};\n    for (const [k, v] of Object.entries(value)) out[k] = emptyToNull(v);\n    return out;\n  }\n  return value;\n}\n\n/**\n * Wyciąga dane z odpowiedzi API. Rzuca błąd, gdy odpowiedź nie nadaje się do użycia.\n */\nfunction parseClaudeResponse(response) {\n  if (!response || !Array.isArray(response.content)) {\n    throw new Error('Nieprawidłowa odpowiedź API Claude: ' + JSON.stringify(response).slice(0, 500));\n  }\n  if (response.stop_reason === 'max_tokens') {\n    throw new Error('Odpowiedź Claude ucięta (max_tokens) — dokument zbyt długi.');\n  }\n  if (response.stop_reason === 'refusal') {\n    throw new Error('Claude odmówił przetworzenia dokumentu.');\n  }\n  const textBlock = response.content.find((b) => b.type === 'text');\n  if (!textBlock) throw new Error('Brak bloku tekstowego w odpowiedzi Claude.');\n  const data = emptyToNull(JSON.parse(textBlock.text));\n  return {\n    data,\n    model: response.model,\n    usage: response.usage || {},\n  };\n}\n\n// Koszt w USD wg cennika (za 1 mln tokenów) — do logowania w rejestrze.\nconst MODEL_PRICING = {\n  'claude-haiku-4-5': { input: 1.0, output: 5.0 },\n  'claude-sonnet-5': { input: 2.0, output: 10.0 },\n};\n\nfunction estimateCostUsd(model, usage) {\n  const key = Object.keys(MODEL_PRICING).find((m) => (model || '').startsWith(m));\n  if (!key || !usage) return null;\n  const p = MODEL_PRICING[key];\n  const cost = ((usage.input_tokens || 0) * p.input + (usage.output_tokens || 0) * p.output) / 1e6;\n  return Math.round(cost * 100000) / 100000;\n}\n\n// ===== logika węzła =====\nconst base = $('Przygotuj zapytanie').first().json.request;\nconst request = Object.assign({}, base, {\n  model: MODEL_FALLBACK,\n  output_config: Object.assign({}, base.output_config, { effort: 'medium' }),\n});\nreturn [{ json: { request } }];\n"
+      },
+      "id": "370410d1-1963-affc-c125-3b3447b78633",
+      "name": "Zapytanie – Sonnet 5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/filename.js =====\n// Budowa nazwy pliku archiwalnego wg szablonu.\n// Dostępne pola: {data} {rrrr} {mm} {dd} {typ} {nip} {kontrahent} {numer} {oryginal}\n// Domyślny szablon: {data}_{typ}_{nip}_{numer}  ->  2026-09-15_FV_1234563218_FV-123-09-2026.pdf\n\nconst DEFAULT_FILENAME_TEMPLATE = '{data}_{typ}_{nip}_{numer}';\n\nconst TYPE_CODES = {\n  FAKTURA: 'FV',\n  FAKTURA_KOREKTA: 'KOR',\n  WZ: 'WZ',\n  ZAMOWIENIE: 'ZAM',\n  PARAGON: 'PAR',\n  INNY: 'DOK',\n};\n\nconst PL_CHARS = {\n  ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',\n  Ą: 'A', Ć: 'C', Ę: 'E', Ł: 'L', Ń: 'N', Ó: 'O', Ś: 'S', Ź: 'Z', Ż: 'Z',\n};\n\nfunction sanitizeFilePart(value, maxLen) {\n  const s = String(value === null || value === undefined ? '' : value)\n    .replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (c) => PL_CHARS[c])\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[\\\\/:*?\"<>|\\s]+/g, '-')\n    .replace(/[^A-Za-z0-9._-]/g, '')\n    .replace(/-{2,}/g, '-')\n    .replace(/^[-.]+|[-.]+$/g, '');\n  return maxLen ? s.slice(0, maxLen).replace(/[-.]+$/, '') : s;\n}\n\n// Skraca nazwę firmy: usuwa formę prawną i tnie na granicy słowa.\nfunction shortCompanyName(name, maxLen) {\n  const cleaned = String(name || '')\n    .replace(/\\b(sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|sp[óo][łl]ka z ograniczon[ąa] odpowiedzialno[śs]ci[ąa]|s\\.?\\s*a\\.|sp\\.?\\s*[jkp]\\.|sp[óo][łl]ka (jawna|komandytowa|akcyjna|cywilna)|s\\.c\\.|gmbh|ltd\\.?|inc\\.?)(?=\\s|$|,)/gi, '')\n    .replace(/[\\s,.-]+$/, '')\n    .trim();\n  const parts = sanitizeFilePart(cleaned).split('-');\n  let out = '';\n  for (const part of parts) {\n    const next = out ? out + '-' + part : part;\n    if (next.length > maxLen) break;\n    out = next;\n  }\n  return out || sanitizeFilePart(cleaned, maxLen);\n}\n\n// \"PL 123-456-32-18\" -> \"1234563218\"; zagraniczny zostaje z prefiksem: \"DE123456789\"\nfunction cleanNip(nip) {\n  return String(nip || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^PL(?=\\d{10}$)/, '');\n}\n\nfunction fileExtension(originalName, mimeType) {\n  const m = String(originalName || '').match(/\\.([A-Za-z0-9]{2,5})$/);\n  if (m) return '.' + m[1].toLowerCase();\n  const byMime = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };\n  return byMime[mimeType] || '.pdf';\n}\n\nfunction buildFileName(doc, options) {\n  const opt = options || {};\n  const template = opt.template || DEFAULT_FILENAME_TEMPLATE;\n  const d = doc || {};\n  const date = /^\\d{4}-\\d{2}-\\d{2}$/.test(d.data_wystawienia || '') ? d.data_wystawienia : 'brak-daty';\n  const [rrrr, mm, dd] = date === 'brak-daty' ? ['0000', '00', '00'] : date.split('-');\n  const nip = cleanNip(d.sprzedawca && d.sprzedawca.nip) || 'brak-NIP';\n  const original = String(opt.originalName || '').replace(/\\.[A-Za-z0-9]{2,5}$/, '');\n\n  const values = {\n    data: date,\n    rrrr,\n    mm,\n    dd,\n    typ: TYPE_CODES[d.typ_dokumentu] || 'DOK',\n    nip,\n    kontrahent: shortCompanyName((d.sprzedawca && d.sprzedawca.nazwa) || 'brak-kontrahenta', 30),\n    numer: sanitizeFilePart(d.numer || 'brak-numeru', 40),\n    oryginal: sanitizeFilePart(original, 40),\n  };\n\n  let base = template.replace(/\\{(\\w+)\\}/g, (_, k) => (k in values ? values[k] : ''));\n  base = sanitizeFilePart(base, 150);\n  if (opt.prefix) base = sanitizeFilePart(opt.prefix) + '_' + base;\n  return base + fileExtension(opt.originalName, opt.mimeType);\n}\n\nfunction archiveFolderName(doc) {\n  const date = doc && /^\\d{4}-\\d{2}/.test(doc.data_wystawienia || '') ? doc.data_wystawienia.slice(0, 7) : 'bez-daty';\n  return date;\n}\n\n// ===== src/validate.js =====\n// Deterministyczna walidacja odczytanego dokumentu.\n// Wszystkie obliczenia w groszach (liczby całkowite) — bez błędów zmiennoprzecinkowych.\n// Wklejany do węzła Code w n8n przez scripts/build_workflows.mjs.\n\nconst DEFAULT_VALIDATION_OPTIONS = {\n  tolLineGr: 2, // tolerancja zaokrągleń na pozycji (ilość × cena)\n  tolDocGr: 5, // tolerancja na poziomie dokumentu (sumy, tabela VAT)\n  minPewnosc: 0.8,\n  nipFirmy: '', // NIP naszej firmy — ostrzeżenie, gdy dokument wystawiono na inny podmiot\n  existingKeys: [], // klucze dokumentów już obecnych w rejestrze (wykrywanie duplikatów)\n  today: null, // 'RRRR-MM-DD' — do testów; domyślnie bieżąca data\n};\n\nconst PL_VAT_RATES = { '23': 23, '8': 8, '5': 5, '0': 0, zw: 0, np: 0, oo: 0 };\n\nfunction toGr(value) {\n  if (value === null || value === undefined || value === '') return null;\n  const n = typeof value === 'number' ? value : Number(String(value).replace(/\\s/g, '').replace(',', '.'));\n  if (!Number.isFinite(n)) return null;\n  return Math.round(n * 100);\n}\n\nfunction fmtGr(gr) {\n  if (gr === null || gr === undefined) return '—';\n  const sign = gr < 0 ? '-' : '';\n  const abs = Math.abs(gr);\n  const zl = Math.floor(abs / 100)\n    .toString()\n    .replace(/\\B(?=(\\d{3})+(?!\\d))/g, ' ');\n  return `${sign}${zl},${String(abs % 100).padStart(2, '0')}`;\n}\n\nfunction normalizeRate(rate) {\n  if (rate === null || rate === undefined) return null;\n  let r = String(rate).trim().toLowerCase().replace('%', '').replace(',', '.');\n  if (r === 'zw.' || r === 'zwol' || r === 'zwolniona') r = 'zw';\n  if (r === 'n.p.' || r === 'np.' || r === 'nie podlega') r = 'np';\n  if (r === 'o.o.' || r === 'oo.') r = 'oo';\n  const num = Number(r);\n  if (Number.isFinite(num)) {\n    // 0.23 -> 23\n    const pct = num > 0 && num < 1 ? num * 100 : num;\n    return String(Math.round(pct * 100) / 100);\n  }\n  return r;\n}\n\nfunction rateValue(rate) {\n  if (rate in PL_VAT_RATES) return PL_VAT_RATES[rate];\n  const n = Number(rate);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction normalizeNip(nip) {\n  if (!nip) return { digits: '', prefix: '' };\n  const s = String(nip).toUpperCase().replace(/[\\s-]/g, '');\n  const m = s.match(/^([A-Z]{2})?(.*)$/);\n  return { prefix: m[1] || '', digits: m[2].replace(/[^0-9A-Z]/g, '') };\n}\n\nfunction isValidPlNip(digits) {\n  if (!/^\\d{10}$/.test(digits)) return false;\n  const w = [6, 5, 7, 2, 3, 4, 5, 6, 7];\n  const sum = w.reduce((acc, wi, i) => acc + wi * Number(digits[i]), 0);\n  const ctrl = sum % 11;\n  return ctrl !== 10 && ctrl === Number(digits[9]);\n}\n\nfunction isPolish(podmiot, nipPrefix) {\n  const kraj = (podmiot && podmiot.kraj ? String(podmiot.kraj) : '').toUpperCase();\n  if (nipPrefix && nipPrefix !== 'PL') return false;\n  return !kraj || kraj === 'PL' || kraj === 'POLSKA';\n}\n\nfunction isIsoDate(s) {\n  if (typeof s !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return false;\n  const d = new Date(s + 'T00:00:00Z');\n  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;\n}\n\nfunction documentKey(doc) {\n  const { digits } = normalizeNip(doc && doc.sprzedawca && doc.sprzedawca.nip);\n  const numer = String((doc && doc.numer) || '')\n    .toUpperCase()\n    .replace(/\\s+/g, '');\n  return `${digits || 'BRAK-NIP'}|${numer || 'BRAK-NUMERU'}`;\n}\n\n/**\n * Główna funkcja walidacji.\n * Zwraca { ok, errors[], warnings[], needsRetry, key, totals }.\n * errors/warnings: { code, message, retryable }\n */\nfunction validateDocument(doc, userOptions) {\n  const opt = Object.assign({}, DEFAULT_VALIDATION_OPTIONS, userOptions || {});\n  const errors = [];\n  const warnings = [];\n  const err = (code, message, retryable = true) => errors.push({ code, message, retryable });\n  const warn = (code, message) => warnings.push({ code, message, retryable: false });\n\n  if (!doc || typeof doc !== 'object') {\n    err('BRAK_DANYCH', 'Brak odczytanych danych dokumentu.');\n    return { ok: false, errors, warnings, needsRetry: true, key: null, totals: null };\n  }\n\n  const typ = doc.typ_dokumentu;\n  const isInvoice = typ === 'FAKTURA' || typ === 'FAKTURA_KOREKTA';\n  const isKorekta = typ === 'FAKTURA_KOREKTA';\n  const pozycje = Array.isArray(doc.pozycje) ? doc.pozycje : [];\n  const podsumowanie = Array.isArray(doc.podsumowanie_vat) ? doc.podsumowanie_vat : [];\n\n  // --- 1. Typ i pola wymagane -------------------------------------------------\n  if (!typ || typ === 'INNY') {\n    err('TYP_NIEROZPOZNANY', 'Nie rozpoznano typu dokumentu (FV / WZ / zamówienie).', false);\n  }\n  if (!doc.numer) err('BRAK_NUMERU', 'Brak numeru dokumentu.');\n  if (!doc.data_wystawienia) err('BRAK_DATY', 'Brak daty wystawienia.');\n  if (!doc.sprzedawca || !doc.sprzedawca.nazwa) err('BRAK_KONTRAHENTA', 'Brak nazwy kontrahenta (sprzedawcy/dostawcy).');\n\n  if (isInvoice || typ === 'PARAGON') {\n    if (toGr(doc.suma_brutto) === null) err('BRAK_SUMY', 'Brak kwoty brutto do zapłaty w podsumowaniu.');\n  }\n  if (isInvoice && pozycje.length === 0) err('BRAK_POZYCJI', 'Faktura nie zawiera żadnych odczytanych pozycji.');\n  if (typ === 'WZ' || typ === 'ZAMOWIENIE') {\n    if (pozycje.length === 0) err('BRAK_POZYCJI', 'Dokument nie zawiera żadnych odczytanych pozycji.');\n    pozycje.forEach((p, i) => {\n      const q = Number(p.ilosc);\n      if (!p.ilosc || !Number.isFinite(q) || q === 0) {\n        err('BRAK_ILOSCI', `Pozycja ${p.lp || i + 1} („${p.nazwa}”): brak ilości.`);\n      }\n    });\n  }\n\n  // --- 2. Daty ------------------------------------------------------------------\n  const today = opt.today || new Date().toISOString().slice(0, 10);\n  for (const field of ['data_wystawienia', 'data_sprzedazy', 'termin_platnosci']) {\n    const v = doc[field];\n    if (v && !isIsoDate(v)) err('ZLA_DATA', `Nieprawidłowa data w polu ${field}: „${v}”.`);\n  }\n  if (isIsoDate(doc.data_wystawienia)) {\n    const days = (Date.parse(doc.data_wystawienia) - Date.parse(today)) / 86400000;\n    if (days > 1) warn('DATA_PRZYSZLA', `Data wystawienia ${doc.data_wystawienia} jest w przyszłości.`);\n    if (days < -365) warn('DATA_STARA', `Data wystawienia ${doc.data_wystawienia} jest starsza niż rok.`);\n  }\n\n  // --- 3. NIP -------------------------------------------------------------------\n  const seller = normalizeNip(doc.sprzedawca && doc.sprzedawca.nip);\n  if (isInvoice) {\n    if (!seller.digits) {\n      err('BRAK_NIP', 'Brak NIP sprzedawcy.');\n    } else if (isPolish(doc.sprzedawca, seller.prefix)) {\n      if (!isValidPlNip(seller.digits)) err('ZLY_NIP', `NIP sprzedawcy ${seller.digits} ma błędną sumę kontrolną.`);\n    } else {\n      warn('KONTRAHENT_ZAGRANICZNY', `Sprzedawca zagraniczny (${seller.prefix || doc.sprzedawca.kraj} ${seller.digits}) — sprawdź rodzaj transakcji (WNT/import usług).`);\n    }\n  } else if (seller.digits && isPolish(doc.sprzedawca, seller.prefix) && !isValidPlNip(seller.digits)) {\n    warn('ZLY_NIP', `NIP kontrahenta ${seller.digits} ma błędną sumę kontrolną.`);\n  }\n  const buyer = normalizeNip(doc.nabywca && doc.nabywca.nip);\n  if (buyer.digits && isPolish(doc.nabywca, buyer.prefix) && !isValidPlNip(buyer.digits)) {\n    warn('ZLY_NIP_NABYWCY', `NIP nabywcy ${buyer.digits} ma błędną sumę kontrolną.`);\n  }\n  const nipFirmy = normalizeNip(opt.nipFirmy).digits;\n  if (isInvoice && nipFirmy && buyer.digits && buyer.digits !== nipFirmy) {\n    warn('INNY_NABYWCA', `Nabywca na fakturze (NIP ${buyer.digits}) to nie nasza firma (NIP ${nipFirmy}).`);\n  }\n\n  // --- 4. Waluta, pewność ----------------------------------------------------\n  if (doc.waluta && String(doc.waluta).toUpperCase() !== 'PLN') {\n    warn('WALUTA_OBCA', `Dokument w walucie ${doc.waluta} — wymaga przeliczenia kursem NBP.`);\n  }\n  const pewnosc = Number(doc.pewnosc);\n  const lowConfidence = Number.isFinite(pewnosc) && pewnosc < opt.minPewnosc;\n  if (lowConfidence) warn('NISKA_PEWNOSC', `Model ocenił pewność odczytu na ${pewnosc} (< ${opt.minPewnosc}).`);\n\n  // --- 5. Pozycje: ilość × cena, netto + VAT = brutto -------------------------\n  const byRate = {}; // stawka -> { netto, vat, brutto, nettoKnown, bruttoKnown }\n  let linesNetto = 0;\n  let linesBrutto = 0;\n  let allLinesHaveNetto = pozycje.length > 0;\n  let allLinesHaveBrutto = pozycje.length > 0;\n  let anyAmounts = false;\n\n  pozycje.forEach((p, i) => {\n    const label = `Pozycja ${p.lp || i + 1} („${String(p.nazwa || '').slice(0, 40)}”)`;\n    const netto = toGr(p.wartosc_netto);\n    const vat = toGr(p.kwota_vat);\n    const brutto = toGr(p.wartosc_brutto);\n    const rate = normalizeRate(p.stawka_vat);\n    const qty = Number(p.ilosc);\n    const price = p.cena_netto === null || p.cena_netto === undefined ? null : Number(p.cena_netto);\n\n    if (netto !== null || brutto !== null) anyAmounts = true;\n    if (netto === null) allLinesHaveNetto = false;\n    else linesNetto += netto;\n    if (brutto === null) allLinesHaveBrutto = false;\n    else linesBrutto += brutto;\n\n    if (netto !== null && price !== null && Number.isFinite(price) && Number.isFinite(qty) && p.ilosc !== null) {\n      const expected = Math.round(qty * price * 100);\n      if (Math.abs(expected - netto) > opt.tolLineGr) {\n        err('POZYCJA_ILOSC_CENA', `${label}: ${qty} × ${fmtGr(Math.round(price * 100))} = ${fmtGr(expected)}, a wartość netto na dokumencie to ${fmtGr(netto)}.`);\n      }\n    }\n    if (netto !== null && vat !== null && brutto !== null && Math.abs(netto + vat - brutto) > opt.tolLineGr) {\n      err('POZYCJA_BRUTTO', `${label}: netto ${fmtGr(netto)} + VAT ${fmtGr(vat)} ≠ brutto ${fmtGr(brutto)}.`);\n    }\n    if (rate !== null && rateValue(rate) === null) {\n      warn('NIEZNANA_STAWKA', `${label}: nierozpoznana stawka VAT „${p.stawka_vat}”.`);\n    } else if (rate !== null && !(rate in PL_VAT_RATES)) {\n      warn('STAWKA_NIETYPOWA', `${label}: stawka VAT ${rate}% nie jest stawką krajową.`);\n    }\n    if (isInvoice && rate === null && (netto !== null || brutto !== null)) {\n      err('BRAK_STAWKI', `${label}: brak stawki VAT.`);\n    }\n\n    if (rate !== null) {\n      const g = (byRate[rate] = byRate[rate] || { netto: 0, vat: 0, brutto: 0, nettoKnown: true, bruttoKnown: true });\n      if (netto === null) g.nettoKnown = false;\n      else g.netto += netto;\n      if (brutto === null) g.bruttoKnown = false;\n      else g.brutto += brutto;\n      if (vat !== null) g.vat += vat;\n    }\n  });\n\n  // --- 6. Podsumowanie dokumentu (weryfikacja bezwarunkowa) --------------------\n  const sumaNetto = toGr(doc.suma_netto);\n  const sumaVat = toGr(doc.suma_vat);\n  const sumaBrutto = toGr(doc.suma_brutto);\n  const hasSummaryAmounts = sumaNetto !== null || sumaBrutto !== null;\n  // WZ / zamówienie bez kwot: sprawdzamy tylko ilości.\n  const checkMath = isInvoice || typ === 'PARAGON' || anyAmounts || hasSummaryAmounts;\n\n  if (checkMath) {\n    // 6a. Suma pozycji vs podsumowanie dokumentu\n    if (allLinesHaveNetto && sumaNetto !== null) {\n      if (Math.abs(linesNetto - sumaNetto) > opt.tolDocGr) {\n        err('SUMA_NETTO', `Suma netto pozycji ${fmtGr(linesNetto)} ≠ netto w podsumowaniu ${fmtGr(sumaNetto)} (różnica ${fmtGr(linesNetto - sumaNetto)}).`);\n      }\n    } else if (allLinesHaveBrutto && sumaBrutto !== null) {\n      if (Math.abs(linesBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('SUMA_BRUTTO_POZYCJI', `Suma brutto pozycji ${fmtGr(linesBrutto)} ≠ brutto w podsumowaniu ${fmtGr(sumaBrutto)} (różnica ${fmtGr(linesBrutto - sumaBrutto)}).`);\n      }\n    } else if (pozycje.length > 0 && isInvoice) {\n      err('POZYCJE_BEZ_KWOT', 'Nie da się zsumować pozycji — brak wartości netto/brutto na części pozycji.');\n    }\n\n    if (allLinesHaveBrutto && sumaBrutto !== null && allLinesHaveNetto && sumaNetto !== null) {\n      if (Math.abs(linesBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('SUMA_BRUTTO_POZYCJI', `Suma brutto pozycji ${fmtGr(linesBrutto)} ≠ brutto w podsumowaniu ${fmtGr(sumaBrutto)}.`);\n      }\n    }\n\n    // 6b. netto + VAT = brutto dla całego dokumentu\n    if (sumaNetto !== null && sumaVat !== null && sumaBrutto !== null) {\n      if (Math.abs(sumaNetto + sumaVat - sumaBrutto) > 1) {\n        err('SUMA_NETTO_VAT_BRUTTO', `Podsumowanie: netto ${fmtGr(sumaNetto)} + VAT ${fmtGr(sumaVat)} ≠ brutto ${fmtGr(sumaBrutto)}.`);\n      }\n    } else if (isInvoice && (sumaNetto === null || sumaVat === null)) {\n      warn('NIEPELNE_PODSUMOWANIE', 'Podsumowanie nie zawiera osobno kwot netto i VAT.');\n    }\n\n    // 6c. Tabela VAT wg stawek\n    if (podsumowanie.length > 0) {\n      let tNetto = 0;\n      let tVat = 0;\n      let tBrutto = 0;\n      let tNettoOk = true;\n      let tVatOk = true;\n      let tBruttoOk = true;\n      const seenRates = new Set();\n\n      podsumowanie.forEach((row) => {\n        const rate = normalizeRate(row.stawka_vat);\n        seenRates.add(rate);\n        const n = toGr(row.netto);\n        const v = toGr(row.vat);\n        const b = toGr(row.brutto);\n        if (n === null) tNettoOk = false;\n        else tNetto += n;\n        if (v === null) tVatOk = false;\n        else tVat += v;\n        if (b === null) tBruttoOk = false;\n        else tBrutto += b;\n\n        if (n !== null && v !== null && b !== null && Math.abs(n + v - b) > 1) {\n          err('VAT_WIERSZ', `Tabela VAT, stawka ${rate}: netto ${fmtGr(n)} + VAT ${fmtGr(v)} ≠ brutto ${fmtGr(b)}.`);\n        }\n        const rv = rateValue(rate);\n        if (n !== null && v !== null && rv !== null) {\n          // VAT liczony od netto (lub od brutto — wtedy dopuszczamy większą różnicę zaokrągleń)\n          const expectedVat = Math.round((n * rv) / 100);\n          const tol = doc.metoda_liczenia_vat === 'od_brutto' ? opt.tolDocGr : Math.max(1, opt.tolLineGr);\n          if (Math.abs(expectedVat - v) > tol) {\n            err('VAT_STAWKA', `Tabela VAT, stawka ${rate}: ${rv}% od ${fmtGr(n)} to ${fmtGr(expectedVat)}, a na dokumencie VAT = ${fmtGr(v)}.`);\n          }\n        }\n        const g = byRate[rate];\n        if (g && n !== null && g.nettoKnown && Math.abs(g.netto - n) > opt.tolDocGr) {\n          err('VAT_POZYCJE', `Stawka ${rate}: suma netto pozycji ${fmtGr(g.netto)} ≠ netto w tabeli VAT ${fmtGr(n)}.`);\n        } else if (g && b !== null && !g.nettoKnown && g.bruttoKnown && Math.abs(g.brutto - b) > opt.tolDocGr) {\n          err('VAT_POZYCJE', `Stawka ${rate}: suma brutto pozycji ${fmtGr(g.brutto)} ≠ brutto w tabeli VAT ${fmtGr(b)}.`);\n        }\n      });\n\n      Object.keys(byRate).forEach((rate) => {\n        if (!seenRates.has(rate)) {\n          err('VAT_BRAK_STAWKI', `Pozycje zawierają stawkę ${rate}, której nie ma w tabeli podsumowania VAT.`);\n        }\n      });\n\n      if (tNettoOk && sumaNetto !== null && Math.abs(tNetto - sumaNetto) > opt.tolDocGr) {\n        err('VAT_SUMA_NETTO', `Suma netto tabeli VAT ${fmtGr(tNetto)} ≠ netto dokumentu ${fmtGr(sumaNetto)}.`);\n      }\n      if (tVatOk && sumaVat !== null && Math.abs(tVat - sumaVat) > opt.tolDocGr) {\n        err('VAT_SUMA_VAT', `Suma VAT tabeli ${fmtGr(tVat)} ≠ VAT dokumentu ${fmtGr(sumaVat)}.`);\n      }\n      if (tBruttoOk && sumaBrutto !== null && Math.abs(tBrutto - sumaBrutto) > opt.tolDocGr) {\n        err('VAT_SUMA_BRUTTO', `Suma brutto tabeli VAT ${fmtGr(tBrutto)} ≠ brutto dokumentu ${fmtGr(sumaBrutto)}.`);\n      }\n    } else if (isInvoice && sumaNetto !== null && sumaVat !== null) {\n      // Brak tabeli VAT: VAT dokumentu musi się zgadzać z VAT wyliczonym z pozycji.\n      let expectedVat = 0;\n      let computable = true;\n      Object.keys(byRate).forEach((rate) => {\n        const rv = rateValue(rate);\n        if (rv === null || !byRate[rate].nettoKnown) computable = false;\n        else expectedVat += Math.round((byRate[rate].netto * rv) / 100);\n      });\n      if (computable && Object.keys(byRate).length > 0 && Math.abs(expectedVat - sumaVat) > opt.tolDocGr) {\n        err('VAT_WYLICZONY', `VAT wyliczony z pozycji ${fmtGr(expectedVat)} ≠ VAT na dokumencie ${fmtGr(sumaVat)}.`);\n      }\n    }\n\n    // 6d. Do zapłaty\n    const doZaplaty = toGr(doc.do_zaplaty);\n    if (doZaplaty !== null && sumaBrutto !== null && doZaplaty !== sumaBrutto && !isKorekta) {\n      warn('DO_ZAPLATY', `Kwota do zapłaty ${fmtGr(doZaplaty)} różni się od brutto ${fmtGr(sumaBrutto)} (zaliczka? częściowa płatność?).`);\n    }\n    if (!isKorekta && sumaBrutto !== null && sumaBrutto < 0) {\n      warn('KWOTA_UJEMNA', 'Ujemna kwota brutto na dokumencie, który nie jest korektą.');\n    }\n  }\n\n  // --- 7. Duplikaty ---------------------------------------------------------------\n  const key = documentKey(doc);\n  if (doc.numer && (opt.existingKeys || []).includes(key)) {\n    err('DUPLIKAT', `Dokument ${doc.numer} od kontrahenta NIP ${seller.digits || '—'} jest już w rejestrze.`, false);\n  }\n\n  const needsRetry = errors.some((e) => e.retryable) || lowConfidence;\n  return {\n    ok: errors.length === 0,\n    errors,\n    warnings,\n    needsRetry,\n    key,\n    totals: {\n      pozycje_netto: allLinesHaveNetto ? linesNetto / 100 : null,\n      pozycje_brutto: allLinesHaveBrutto ? linesBrutto / 100 : null,\n    },\n  };\n}\n\n// ===== logika węzła =====\nconst cfg = $('Konfiguracja').first().json;\nconst r = $input.first().json;\nconst v = r.validation;\nconst doc = r.doc || {};\nconst fileName = buildFileName(doc, {\n  template: cfg.filenameTemplate || undefined,\n  originalName: cfg.fileName,\n  mimeType: cfg.mimeType,\n  prefix: v.ok ? '' : 'SPRAWDZ',\n});\nconst fileLink = 'https://drive.google.com/file/d/' + cfg.fileId + '/view';\nconst sheetLink = 'https://docs.google.com/spreadsheets/d/' + cfg.sheetId;\nconst kwota = doc.suma_brutto != null ? fmtGr(toGr(doc.suma_brutto)) + ' ' + (doc.waluta || 'PLN') : 'brak kwoty';\nconst kontrahent = (doc.sprzedawca && doc.sprzedawca.nazwa) || 'nieznany kontrahent';\nconst li = (arr) => arr.map((e) => '<li>' + String(e.message).replace(/</g, '&lt;') + '</li>').join('');\nconst emailSubject = '[Do weryfikacji] ' + (doc.numer || cfg.fileName) + ' – ' + kontrahent + ' – ' + kwota;\nconst emailHtml =\n  '<p>Dokument <b>' + (doc.numer || cfg.fileName) + '</b> od <b>' + kontrahent + '</b> (' + kwota + ') wymaga ręcznej weryfikacji.</p>' +\n  '<p><b>Wykryte rozbieżności:</b></p><ul>' + li(v.errors) + '</ul>' +\n  (v.warnings.length ? '<p>Ostrzeżenia:</p><ul>' + li(v.warnings) + '</ul>' : '') +\n  '<p>📄 <a href=\"' + fileLink + '\">Otwórz plik</a> (folder 20_Do_weryfikacji, nazwa: ' + fileName + ')<br>' +\n  '📊 <a href=\"' + sheetLink + '\">Rejestr dokumentów</a> — popraw dane w arkuszu i ustaw status <b>ZATWIERDZONY</b> ' +\n  '(albo <b>ODRZUCONY</b>), a dokument trafi do najbliższego eksportu do Optimy.</p>' +\n  '<p style=\"color:#888\">Odczyt: ' + r.model + ', pewność ' + doc.pewnosc + ', koszt ' + r.kosztUsd + ' USD.</p>';\nreturn [{ json: {\n  ok: v.ok,\n  fileName,\n  fileLink,\n  archiveMonth: archiveFolderName(doc),\n  emailSubject,\n  emailHtml,\n} }];\n"
+      },
+      "id": "2ec2dfec-e0eb-3ca3-d0db-fc4718babb29",
+      "name": "Nazwa pliku i decyzja",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "37f3d6e0-1f1b-6adf-cbd2-39c6b122ed94",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "37f3d6e0-1f1b-6adf-cbd2-39c6b122ed94",
+      "name": "Dokument poprawny?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "='{{ $('Konfiguracja').first().json.folderArchiwum }}' in parents and name = '{{ $json.archiveMonth }}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+        "limit": 1,
+        "filter": {},
+        "options": {}
+      },
+      "id": "fff3c2f1-c4f6-1344-6c4f-0965edb3e814",
+      "name": "Szukaj folderu miesiąca",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2600,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a12eace1-afe4-b6c7-565a-cade323b4438",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a12eace1-afe4-b6c7-565a-cade323b4438",
+      "name": "Folder istnieje?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('Nazwa pliku i decyzja').first().json.archiveMonth }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.folderArchiwum }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "d1eb69e8-4f89-d869-d53e-80a1c31404e0",
+      "name": "Utwórz folder miesiąca",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3000,
+        380
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b8bb8795-36f8-553b-b7df-148e45a45412",
+              "name": "targetFolderId",
+              "value": "={{ $('Nazwa pliku i decyzja').first().json.ok ? $json.id : $('Konfiguracja').first().json.folderWeryfikacja }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "9dbbbc1c-5fe1-09a3-5739-db42bedaa02a",
+      "name": "Folder docelowy",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.fileId }}",
+          "mode": "id"
+        },
+        "newUpdatedFileName": "={{ $('Nazwa pliku i decyzja').first().json.fileName }}",
+        "options": {}
+      },
+      "id": "fc0eba9d-f956-b270-86f3-28c4474f287b",
+      "name": "Zmień nazwę pliku",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3400,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.fileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Folder docelowy').first().json.targetFolderId }}",
+          "mode": "id"
+        }
+      },
+      "id": "2e2781b4-2cad-613f-b3e1-09248e3eb9e7",
+      "name": "Przenieś plik",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3600,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/optima_export.js =====\n// Rejestr dokumentów (Google Sheets) i eksport do Comarch Optima (CSV + XML).\n// Wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs.\n//\n// UWAGA: struktura XML to szkic formatu „praca rozproszona” Optimy (rejestr zakupów VAT).\n// Przed produkcją porównaj ją z plikiem wyeksportowanym z Twojej Optimy\n// (Narzędzia -> Praca rozproszona -> Eksport) i popraw wyłącznie OPTIMA_XML_MAPPING / buildOptimaXml.\n\nconst DOC_COLUMNS = [\n  'klucz', 'status', 'typ', 'numer', 'data_wystawienia', 'data_sprzedazy', 'termin_platnosci',\n  'forma_platnosci', 'waluta', 'sprzedawca_nazwa', 'sprzedawca_nip', 'sprzedawca_kraj',\n  'sprzedawca_ulica', 'sprzedawca_kod', 'sprzedawca_miasto', 'nabywca_nazwa', 'nabywca_nip',\n  'dokument_powiazany', 'suma_netto', 'suma_vat', 'suma_brutto', 'do_zaplaty', 'vat_json',\n  'bledy', 'ostrzezenia', 'model', 'pewnosc', 'koszt_usd', 'plik_nazwa', 'plik_link', 'plik_id',\n  'przetworzono', 'eksport',\n];\n\nconst ITEM_COLUMNS = [\n  'klucz', 'lp', 'nazwa', 'kod', 'ilosc', 'jm', 'cena_netto', 'stawka_vat',\n  'wartosc_netto', 'kwota_vat', 'wartosc_brutto',\n];\n\nconst STATUS = {\n  OK: 'OK',\n  DO_WERYFIKACJI: 'DO_WERYFIKACJI',\n  ZATWIERDZONY: 'ZATWIERDZONY',\n  ODRZUCONY: 'ODRZUCONY',\n};\n\nconst OPTIMA_XML_MAPPING = {\n  namespace: 'http://www.comarch.pl/cdn/optima/offline',\n  wersja: '2.00',\n  bazaZrodlowa: 'N8N-OBIEG-DOKUMENTOW',\n  rejestr: 'ZAKUP', // nazwa rejestru zakupów w Optimie\n  akronimZ: 'nip', // 'nip' | 'nazwa' — z czego budować akronim kontrahenta\n  rodzajZakupu: 'towary', // towary | usługi | inne | środki trwałe\n  kolumnaKpr: 'Zakup towarów',\n  odliczeniaVat: 'tak',\n  typyDoRejestru: ['FAKTURA', 'FAKTURA_KOREKTA'],\n};\n\nfunction toNum(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (typeof v === 'number') return v;\n  const n = Number(String(v).replace(/\\s/g, '').replace(',', '.'));\n  return Number.isFinite(n) ? n : null;\n}\n\n// \"PL 123-456-32-18\" -> \"1234563218\"; zagraniczny zostaje z prefiksem: \"DE123456789\"\nfunction cleanNipExport(nip) {\n  return String(nip || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^PL(?=\\d{10}$)/, '');\n}\n\nfunction round2(n) {\n  return n === null ? null : Math.round(n * 100) / 100;\n}\n\n// --- Rejestr (Sheets) ----------------------------------------------------------\n\nfunction toRegisterRecords(doc, validation, meta) {\n  const d = doc || {};\n  const m = meta || {};\n  const s = d.sprzedawca || {};\n  const n = d.nabywca || {};\n  const v = validation || { errors: [], warnings: [] };\n  const dokument = {\n    klucz: v.key || '',\n    status: v.ok ? STATUS.OK : STATUS.DO_WERYFIKACJI,\n    typ: d.typ_dokumentu || '',\n    numer: d.numer || '',\n    data_wystawienia: d.data_wystawienia || '',\n    data_sprzedazy: d.data_sprzedazy || '',\n    termin_platnosci: d.termin_platnosci || '',\n    forma_platnosci: d.forma_platnosci || '',\n    waluta: d.waluta || 'PLN',\n    sprzedawca_nazwa: s.nazwa || '',\n    sprzedawca_nip: cleanNipExport(s.nip),\n    sprzedawca_kraj: s.kraj || '',\n    sprzedawca_ulica: s.ulica || '',\n    sprzedawca_kod: s.kod_pocztowy || '',\n    sprzedawca_miasto: s.miasto || '',\n    nabywca_nazwa: n.nazwa || '',\n    nabywca_nip: cleanNipExport(n.nip),\n    dokument_powiazany: d.numer_dokumentu_powiazanego || '',\n    suma_netto: toNum(d.suma_netto),\n    suma_vat: toNum(d.suma_vat),\n    suma_brutto: toNum(d.suma_brutto),\n    do_zaplaty: toNum(d.do_zaplaty),\n    vat_json: JSON.stringify(d.podsumowanie_vat || []),\n    bledy: (v.errors || []).map((e) => e.message).join('\\n'),\n    ostrzezenia: (v.warnings || []).map((w) => w.message).join('\\n'),\n    model: m.model || '',\n    pewnosc: toNum(d.pewnosc),\n    koszt_usd: m.kosztUsd === undefined ? null : m.kosztUsd,\n    plik_nazwa: m.fileName || '',\n    plik_link: m.fileLink || '',\n    plik_id: m.fileId || '',\n    przetworzono: m.processedAt || new Date().toISOString(),\n    eksport: '',\n  };\n  const pozycje = (d.pozycje || []).map((p, i) => ({\n    klucz: dokument.klucz,\n    lp: p.lp || i + 1,\n    nazwa: p.nazwa || '',\n    kod: p.kod || '',\n    ilosc: toNum(p.ilosc),\n    jm: p.jm || '',\n    cena_netto: toNum(p.cena_netto),\n    stawka_vat: p.stawka_vat === null || p.stawka_vat === undefined ? '' : String(p.stawka_vat),\n    wartosc_netto: toNum(p.wartosc_netto),\n    kwota_vat: toNum(p.kwota_vat),\n    wartosc_brutto: toNum(p.wartosc_brutto),\n  }));\n  return { dokument, pozycje };\n}\n\n/** Łączy wiersze z arkuszy Dokumenty + Pozycje w listę dokumentów do eksportu. */\nfunction recordsFromSheets(docRows, itemRows) {\n  const itemsByKey = {};\n  (itemRows || []).forEach((r) => {\n    (itemsByKey[r.klucz] = itemsByKey[r.klucz] || []).push(r);\n  });\n  return (docRows || []).map((r) => Object.assign({}, r, { pozycje: itemsByKey[r.klucz] || [] }));\n}\n\nfunction isExportable(row) {\n  return (row.status === STATUS.OK || row.status === STATUS.ZATWIERDZONY) && !row.eksport;\n}\n\n/** Wiersze tabeli VAT: z vat_json (odczyt z dokumentu), a gdy pusty — wyliczone z pozycji. */\nfunction vatRows(rec) {\n  let rows = [];\n  try {\n    rows = JSON.parse(rec.vat_json || '[]');\n  } catch (e) {\n    rows = [];\n  }\n  rows = (rows || [])\n    .map((r) => ({ stawka: String(r.stawka_vat).replace('%', '').trim().toLowerCase(), netto: toNum(r.netto), vat: toNum(r.vat) }))\n    .filter((r) => r.netto !== null);\n  if (rows.length > 0) return rows;\n\n  const byRate = {};\n  (rec.pozycje || []).forEach((p) => {\n    const rate = String(p.stawka_vat || '').replace('%', '').trim().toLowerCase();\n    const netto = toNum(p.wartosc_netto);\n    if (!rate || netto === null) return;\n    byRate[rate] = (byRate[rate] || 0) + Math.round(netto * 100);\n  });\n  const computed = Object.keys(byRate).map((rate) => {\n    const pct = Number(rate);\n    const vatGr = Number.isFinite(pct) ? Math.round((byRate[rate] * pct) / 100) : 0;\n    return { stawka: rate, netto: byRate[rate] / 100, vat: vatGr / 100 };\n  });\n  if (computed.length > 0) return computed;\n  // Ostatecznie: jedna pozycja z sum dokumentu\n  return [{ stawka: '23', netto: toNum(rec.suma_netto) || 0, vat: toNum(rec.suma_vat) || 0 }];\n}\n\n// --- CSV ------------------------------------------------------------------------\n\nfunction csvValue(v) {\n  if (v === null || v === undefined) return '';\n  if (typeof v === 'number') return String(v).replace('.', ',');\n  const s = String(v);\n  return /[;\"\\n\\r]/.test(s) ? '\"' + s.replace(/\"/g, '\"\"') + '\"' : s;\n}\n\nfunction toCsv(columns, rows) {\n  const lines = [columns.join(';')];\n  rows.forEach((r) => lines.push(columns.map((c) => csvValue(r[c])).join(';')));\n  // BOM, żeby Excel/Optima poprawnie rozpoznały UTF-8 z polskimi znakami\n  return '﻿' + lines.join('\\r\\n') + '\\r\\n';\n}\n\nconst CSV_DOC_COLUMNS = [\n  'klucz', 'typ', 'numer', 'data_wystawienia', 'data_sprzedazy', 'termin_platnosci', 'forma_platnosci',\n  'waluta', 'sprzedawca_nazwa', 'sprzedawca_nip', 'sprzedawca_ulica', 'sprzedawca_kod', 'sprzedawca_miasto',\n  'dokument_powiazany', 'suma_netto', 'suma_vat', 'suma_brutto', 'plik_nazwa', 'plik_link',\n];\n\nfunction buildCsvDokumenty(records) {\n  return toCsv(CSV_DOC_COLUMNS, records);\n}\n\nfunction buildCsvPozycje(records) {\n  const rows = [];\n  records.forEach((rec) => {\n    (rec.pozycje || []).forEach((p) => rows.push(Object.assign({ numer: rec.numer, typ: rec.typ }, p)));\n  });\n  return toCsv(['klucz', 'typ', 'numer'].concat(ITEM_COLUMNS.slice(1)), rows);\n}\n\n// --- XML Optima -----------------------------------------------------------------\n\nfunction xmlEscape(v) {\n  return String(v === null || v === undefined ? '' : v)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n}\n\nfunction tag(name, value, indent) {\n  return `${indent}<${name}>${xmlEscape(value)}</${name}>`;\n}\n\nfunction amount(n) {\n  return (Math.round((toNum(n) || 0) * 100) / 100).toFixed(2);\n}\n\n// Deterministyczny identyfikator w formacie GUID z klucza dokumentu (FNV-1a),\n// żeby ponowny eksport tego samego dokumentu nie tworzył duplikatu w Optimie.\nfunction stableGuid(key) {\n  const parts = [];\n  for (let seed = 0; seed < 4; seed++) {\n    let h = 0x811c9dc5 ^ seed;\n    const s = String(key);\n    for (let i = 0; i < s.length; i++) {\n      h ^= s.charCodeAt(i);\n      h = Math.imul(h, 0x01000193) >>> 0;\n    }\n    parts.push(h.toString(16).padStart(8, '0'));\n  }\n  const hex = parts.join('');\n  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`.toUpperCase();\n}\n\nfunction vatStatus(stawka) {\n  if (stawka === 'zw') return { stawka: '0.00', status: 'zwolniona' };\n  if (stawka === 'np' || stawka === 'oo') return { stawka: '0.00', status: 'nie podlega' };\n  const n = Number(stawka);\n  return { stawka: (Number.isFinite(n) ? n : 0).toFixed(2), status: 'opodatkowana' };\n}\n\nfunction buildOptimaXml(records, mappingOverrides) {\n  const map = Object.assign({}, OPTIMA_XML_MAPPING, mappingOverrides || {});\n  const docs = records.filter((r) => map.typyDoRejestru.includes(r.typ));\n  const out = [];\n  out.push('<?xml version=\"1.0\" encoding=\"UTF-8\"?>');\n  out.push(`<ROOT xmlns=\"${map.namespace}\">`);\n  out.push('  <REJESTRY_ZAKUPU_VAT>');\n  out.push(tag('WERSJA', map.wersja, '    '));\n  out.push(tag('BAZA_ZRD_ID', map.bazaZrodlowa, '    '));\n  docs.forEach((r) => {\n    const i = '      ';\n    const kraj = (r.sprzedawca_kraj || 'PL').toUpperCase();\n    const krajowy = kraj === 'PL' || kraj === 'POLSKA';\n    const akronim = map.akronimZ === 'nazwa' ? String(r.sprzedawca_nazwa || '').slice(0, 20) : r.sprzedawca_nip || String(r.sprzedawca_nazwa || '').slice(0, 20);\n    out.push('    <REJESTR_ZAKUPU_VAT>');\n    out.push(tag('ID_ZRODLA', stableGuid(r.klucz), i));\n    out.push(tag('MODUL', 'Rejestr Vat', i));\n    out.push(tag('TYP', 'Rejestr zakupu', i));\n    out.push(tag('REJESTR', map.rejestr, i));\n    out.push(tag('DATA_WYSTAWIENIA', r.data_wystawienia, i));\n    out.push(tag('DATA_ZAKUPU', r.data_sprzedazy || r.data_wystawienia, i));\n    out.push(tag('DATA_WPLYWU', String(r.przetworzono || '').slice(0, 10) || r.data_wystawienia, i));\n    out.push(tag('TERMIN', r.termin_platnosci || r.data_wystawienia, i));\n    out.push(tag('NUMER', r.numer, i));\n    out.push(tag('KOREKTA', r.typ === 'FAKTURA_KOREKTA' ? 'Tak' : 'Nie', i));\n    if (r.typ === 'FAKTURA_KOREKTA') out.push(tag('KOREKTA_NUMER', r.dokument_powiazany, i));\n    out.push(tag('WEWNETRZNA', 'Nie', i));\n    out.push(tag('FISKALNA', 'Nie', i));\n    out.push(tag('DETALICZNA', 'Nie', i));\n    out.push(tag('EKSPORT', krajowy ? 'krajowy' : 'wewnątrzunijny', i));\n    out.push(tag('PODATNIK_CZYNNY', 'Tak', i));\n    out.push(tag('TYP_PODMIOTU', 'kontrahent', i));\n    out.push(tag('PODMIOT', akronim, i));\n    out.push(tag('NAZWA1', String(r.sprzedawca_nazwa || '').slice(0, 50), i));\n    out.push(tag('NAZWA2', String(r.sprzedawca_nazwa || '').slice(50, 100), i));\n    out.push(tag('NIP_KRAJ', krajowy ? 'PL' : kraj, i));\n    out.push(tag('NIP', r.sprzedawca_nip, i));\n    out.push(tag('KRAJ', krajowy ? 'Polska' : kraj, i));\n    out.push(tag('ULICA', r.sprzedawca_ulica, i));\n    out.push(tag('MIASTO', r.sprzedawca_miasto, i));\n    out.push(tag('KOD_POCZTOWY', r.sprzedawca_kod, i));\n    out.push(tag('FORMA_PLATNOSCI', r.forma_platnosci || 'przelew', i));\n    out.push(tag('WALUTA', r.waluta && r.waluta !== 'PLN' ? r.waluta : '', i));\n    out.push(`${i}<POZYCJE>`);\n    vatRows(r).forEach((v) => {\n      const st = vatStatus(v.stawka);\n      const j = i + '    ';\n      out.push(`${i}  <POZYCJA>`);\n      out.push(tag('STAWKA_VAT', st.stawka, j));\n      out.push(tag('STATUS_VAT', st.status, j));\n      out.push(tag('NETTO', amount(v.netto), j));\n      out.push(tag('VAT', amount(v.vat), j));\n      out.push(tag('RODZAJ_ZAKUPU', map.rodzajZakupu, j));\n      out.push(tag('ODLICZENIA_VAT', map.odliczeniaVat, j));\n      out.push(tag('KOLUMNA_KPR', map.kolumnaKpr, j));\n      out.push(`${i}  </POZYCJA>`);\n    });\n    out.push(`${i}</POZYCJE>`);\n    out.push('    </REJESTR_ZAKUPU_VAT>');\n  });\n  out.push('  </REJESTRY_ZAKUPU_VAT>');\n  out.push('</ROOT>');\n  return { xml: out.join('\\n') + '\\n', count: docs.length };\n}\n\n// ===== logika węzła =====\nconst cfg = $('Konfiguracja').first().json;\nconst r = $('Walidacja matematyczna').first().json;\nconst d = $('Nazwa pliku i decyzja').first().json;\nconst { dokument } = toRegisterRecords(r.doc, r.validation, {\n  model: r.model,\n  kosztUsd: r.kosztUsd,\n  fileName: d.fileName,\n  fileLink: d.fileLink,\n  fileId: cfg.fileId,\n});\nreturn [{ json: dokument }];\n"
+      },
+      "id": "8c09d5aa-c08d-34b0-0dc4-d845df9c80e6",
+      "name": "Wiersz rejestru",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dokumenty",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "useAppend": true,
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "id": "f08bc021-d7ea-bfe1-98a7-ae85c480edb5",
+      "name": "Zapisz w rejestrze",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4000,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/optima_export.js =====\n// Rejestr dokumentów (Google Sheets) i eksport do Comarch Optima (CSV + XML).\n// Wklejany do węzłów Code w n8n przez scripts/build_workflows.mjs.\n//\n// UWAGA: struktura XML to szkic formatu „praca rozproszona” Optimy (rejestr zakupów VAT).\n// Przed produkcją porównaj ją z plikiem wyeksportowanym z Twojej Optimy\n// (Narzędzia -> Praca rozproszona -> Eksport) i popraw wyłącznie OPTIMA_XML_MAPPING / buildOptimaXml.\n\nconst DOC_COLUMNS = [\n  'klucz', 'status', 'typ', 'numer', 'data_wystawienia', 'data_sprzedazy', 'termin_platnosci',\n  'forma_platnosci', 'waluta', 'sprzedawca_nazwa', 'sprzedawca_nip', 'sprzedawca_kraj',\n  'sprzedawca_ulica', 'sprzedawca_kod', 'sprzedawca_miasto', 'nabywca_nazwa', 'nabywca_nip',\n  'dokument_powiazany', 'suma_netto', 'suma_vat', 'suma_brutto', 'do_zaplaty', 'vat_json',\n  'bledy', 'ostrzezenia', 'model', 'pewnosc', 'koszt_usd', 'plik_nazwa', 'plik_link', 'plik_id',\n  'przetworzono', 'eksport',\n];\n\nconst ITEM_COLUMNS = [\n  'klucz', 'lp', 'nazwa', 'kod', 'ilosc', 'jm', 'cena_netto', 'stawka_vat',\n  'wartosc_netto', 'kwota_vat', 'wartosc_brutto',\n];\n\nconst STATUS = {\n  OK: 'OK',\n  DO_WERYFIKACJI: 'DO_WERYFIKACJI',\n  ZATWIERDZONY: 'ZATWIERDZONY',\n  ODRZUCONY: 'ODRZUCONY',\n};\n\nconst OPTIMA_XML_MAPPING = {\n  namespace: 'http://www.comarch.pl/cdn/optima/offline',\n  wersja: '2.00',\n  bazaZrodlowa: 'N8N-OBIEG-DOKUMENTOW',\n  rejestr: 'ZAKUP', // nazwa rejestru zakupów w Optimie\n  akronimZ: 'nip', // 'nip' | 'nazwa' — z czego budować akronim kontrahenta\n  rodzajZakupu: 'towary', // towary | usługi | inne | środki trwałe\n  kolumnaKpr: 'Zakup towarów',\n  odliczeniaVat: 'tak',\n  typyDoRejestru: ['FAKTURA', 'FAKTURA_KOREKTA'],\n};\n\nfunction toNum(v) {\n  if (v === null || v === undefined || v === '') return null;\n  if (typeof v === 'number') return v;\n  const n = Number(String(v).replace(/\\s/g, '').replace(',', '.'));\n  return Number.isFinite(n) ? n : null;\n}\n\n// \"PL 123-456-32-18\" -> \"1234563218\"; zagraniczny zostaje z prefiksem: \"DE123456789\"\nfunction cleanNipExport(nip) {\n  return String(nip || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^PL(?=\\d{10}$)/, '');\n}\n\nfunction round2(n) {\n  return n === null ? null : Math.round(n * 100) / 100;\n}\n\n// --- Rejestr (Sheets) ----------------------------------------------------------\n\nfunction toRegisterRecords(doc, validation, meta) {\n  const d = doc || {};\n  const m = meta || {};\n  const s = d.sprzedawca || {};\n  const n = d.nabywca || {};\n  const v = validation || { errors: [], warnings: [] };\n  const dokument = {\n    klucz: v.key || '',\n    status: v.ok ? STATUS.OK : STATUS.DO_WERYFIKACJI,\n    typ: d.typ_dokumentu || '',\n    numer: d.numer || '',\n    data_wystawienia: d.data_wystawienia || '',\n    data_sprzedazy: d.data_sprzedazy || '',\n    termin_platnosci: d.termin_platnosci || '',\n    forma_platnosci: d.forma_platnosci || '',\n    waluta: d.waluta || 'PLN',\n    sprzedawca_nazwa: s.nazwa || '',\n    sprzedawca_nip: cleanNipExport(s.nip),\n    sprzedawca_kraj: s.kraj || '',\n    sprzedawca_ulica: s.ulica || '',\n    sprzedawca_kod: s.kod_pocztowy || '',\n    sprzedawca_miasto: s.miasto || '',\n    nabywca_nazwa: n.nazwa || '',\n    nabywca_nip: cleanNipExport(n.nip),\n    dokument_powiazany: d.numer_dokumentu_powiazanego || '',\n    suma_netto: toNum(d.suma_netto),\n    suma_vat: toNum(d.suma_vat),\n    suma_brutto: toNum(d.suma_brutto),\n    do_zaplaty: toNum(d.do_zaplaty),\n    vat_json: JSON.stringify(d.podsumowanie_vat || []),\n    bledy: (v.errors || []).map((e) => e.message).join('\\n'),\n    ostrzezenia: (v.warnings || []).map((w) => w.message).join('\\n'),\n    model: m.model || '',\n    pewnosc: toNum(d.pewnosc),\n    koszt_usd: m.kosztUsd === undefined ? null : m.kosztUsd,\n    plik_nazwa: m.fileName || '',\n    plik_link: m.fileLink || '',\n    plik_id: m.fileId || '',\n    przetworzono: m.processedAt || new Date().toISOString(),\n    eksport: '',\n  };\n  const pozycje = (d.pozycje || []).map((p, i) => ({\n    klucz: dokument.klucz,\n    lp: p.lp || i + 1,\n    nazwa: p.nazwa || '',\n    kod: p.kod || '',\n    ilosc: toNum(p.ilosc),\n    jm: p.jm || '',\n    cena_netto: toNum(p.cena_netto),\n    stawka_vat: p.stawka_vat === null || p.stawka_vat === undefined ? '' : String(p.stawka_vat),\n    wartosc_netto: toNum(p.wartosc_netto),\n    kwota_vat: toNum(p.kwota_vat),\n    wartosc_brutto: toNum(p.wartosc_brutto),\n  }));\n  return { dokument, pozycje };\n}\n\n/** Łączy wiersze z arkuszy Dokumenty + Pozycje w listę dokumentów do eksportu. */\nfunction recordsFromSheets(docRows, itemRows) {\n  const itemsByKey = {};\n  (itemRows || []).forEach((r) => {\n    (itemsByKey[r.klucz] = itemsByKey[r.klucz] || []).push(r);\n  });\n  return (docRows || []).map((r) => Object.assign({}, r, { pozycje: itemsByKey[r.klucz] || [] }));\n}\n\nfunction isExportable(row) {\n  return (row.status === STATUS.OK || row.status === STATUS.ZATWIERDZONY) && !row.eksport;\n}\n\n/** Wiersze tabeli VAT: z vat_json (odczyt z dokumentu), a gdy pusty — wyliczone z pozycji. */\nfunction vatRows(rec) {\n  let rows = [];\n  try {\n    rows = JSON.parse(rec.vat_json || '[]');\n  } catch (e) {\n    rows = [];\n  }\n  rows = (rows || [])\n    .map((r) => ({ stawka: String(r.stawka_vat).replace('%', '').trim().toLowerCase(), netto: toNum(r.netto), vat: toNum(r.vat) }))\n    .filter((r) => r.netto !== null);\n  if (rows.length > 0) return rows;\n\n  const byRate = {};\n  (rec.pozycje || []).forEach((p) => {\n    const rate = String(p.stawka_vat || '').replace('%', '').trim().toLowerCase();\n    const netto = toNum(p.wartosc_netto);\n    if (!rate || netto === null) return;\n    byRate[rate] = (byRate[rate] || 0) + Math.round(netto * 100);\n  });\n  const computed = Object.keys(byRate).map((rate) => {\n    const pct = Number(rate);\n    const vatGr = Number.isFinite(pct) ? Math.round((byRate[rate] * pct) / 100) : 0;\n    return { stawka: rate, netto: byRate[rate] / 100, vat: vatGr / 100 };\n  });\n  if (computed.length > 0) return computed;\n  // Ostatecznie: jedna pozycja z sum dokumentu\n  return [{ stawka: '23', netto: toNum(rec.suma_netto) || 0, vat: toNum(rec.suma_vat) || 0 }];\n}\n\n// --- CSV ------------------------------------------------------------------------\n\nfunction csvValue(v) {\n  if (v === null || v === undefined) return '';\n  if (typeof v === 'number') return String(v).replace('.', ',');\n  const s = String(v);\n  return /[;\"\\n\\r]/.test(s) ? '\"' + s.replace(/\"/g, '\"\"') + '\"' : s;\n}\n\nfunction toCsv(columns, rows) {\n  const lines = [columns.join(';')];\n  rows.forEach((r) => lines.push(columns.map((c) => csvValue(r[c])).join(';')));\n  // BOM, żeby Excel/Optima poprawnie rozpoznały UTF-8 z polskimi znakami\n  return '﻿' + lines.join('\\r\\n') + '\\r\\n';\n}\n\nconst CSV_DOC_COLUMNS = [\n  'klucz', 'typ', 'numer', 'data_wystawienia', 'data_sprzedazy', 'termin_platnosci', 'forma_platnosci',\n  'waluta', 'sprzedawca_nazwa', 'sprzedawca_nip', 'sprzedawca_ulica', 'sprzedawca_kod', 'sprzedawca_miasto',\n  'dokument_powiazany', 'suma_netto', 'suma_vat', 'suma_brutto', 'plik_nazwa', 'plik_link',\n];\n\nfunction buildCsvDokumenty(records) {\n  return toCsv(CSV_DOC_COLUMNS, records);\n}\n\nfunction buildCsvPozycje(records) {\n  const rows = [];\n  records.forEach((rec) => {\n    (rec.pozycje || []).forEach((p) => rows.push(Object.assign({ numer: rec.numer, typ: rec.typ }, p)));\n  });\n  return toCsv(['klucz', 'typ', 'numer'].concat(ITEM_COLUMNS.slice(1)), rows);\n}\n\n// --- XML Optima -----------------------------------------------------------------\n\nfunction xmlEscape(v) {\n  return String(v === null || v === undefined ? '' : v)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&apos;');\n}\n\nfunction tag(name, value, indent) {\n  return `${indent}<${name}>${xmlEscape(value)}</${name}>`;\n}\n\nfunction amount(n) {\n  return (Math.round((toNum(n) || 0) * 100) / 100).toFixed(2);\n}\n\n// Deterministyczny identyfikator w formacie GUID z klucza dokumentu (FNV-1a),\n// żeby ponowny eksport tego samego dokumentu nie tworzył duplikatu w Optimie.\nfunction stableGuid(key) {\n  const parts = [];\n  for (let seed = 0; seed < 4; seed++) {\n    let h = 0x811c9dc5 ^ seed;\n    const s = String(key);\n    for (let i = 0; i < s.length; i++) {\n      h ^= s.charCodeAt(i);\n      h = Math.imul(h, 0x01000193) >>> 0;\n    }\n    parts.push(h.toString(16).padStart(8, '0'));\n  }\n  const hex = parts.join('');\n  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`.toUpperCase();\n}\n\nfunction vatStatus(stawka) {\n  if (stawka === 'zw') return { stawka: '0.00', status: 'zwolniona' };\n  if (stawka === 'np' || stawka === 'oo') return { stawka: '0.00', status: 'nie podlega' };\n  const n = Number(stawka);\n  return { stawka: (Number.isFinite(n) ? n : 0).toFixed(2), status: 'opodatkowana' };\n}\n\nfunction buildOptimaXml(records, mappingOverrides) {\n  const map = Object.assign({}, OPTIMA_XML_MAPPING, mappingOverrides || {});\n  const docs = records.filter((r) => map.typyDoRejestru.includes(r.typ));\n  const out = [];\n  out.push('<?xml version=\"1.0\" encoding=\"UTF-8\"?>');\n  out.push(`<ROOT xmlns=\"${map.namespace}\">`);\n  out.push('  <REJESTRY_ZAKUPU_VAT>');\n  out.push(tag('WERSJA', map.wersja, '    '));\n  out.push(tag('BAZA_ZRD_ID', map.bazaZrodlowa, '    '));\n  docs.forEach((r) => {\n    const i = '      ';\n    const kraj = (r.sprzedawca_kraj || 'PL').toUpperCase();\n    const krajowy = kraj === 'PL' || kraj === 'POLSKA';\n    const akronim = map.akronimZ === 'nazwa' ? String(r.sprzedawca_nazwa || '').slice(0, 20) : r.sprzedawca_nip || String(r.sprzedawca_nazwa || '').slice(0, 20);\n    out.push('    <REJESTR_ZAKUPU_VAT>');\n    out.push(tag('ID_ZRODLA', stableGuid(r.klucz), i));\n    out.push(tag('MODUL', 'Rejestr Vat', i));\n    out.push(tag('TYP', 'Rejestr zakupu', i));\n    out.push(tag('REJESTR', map.rejestr, i));\n    out.push(tag('DATA_WYSTAWIENIA', r.data_wystawienia, i));\n    out.push(tag('DATA_ZAKUPU', r.data_sprzedazy || r.data_wystawienia, i));\n    out.push(tag('DATA_WPLYWU', String(r.przetworzono || '').slice(0, 10) || r.data_wystawienia, i));\n    out.push(tag('TERMIN', r.termin_platnosci || r.data_wystawienia, i));\n    out.push(tag('NUMER', r.numer, i));\n    out.push(tag('KOREKTA', r.typ === 'FAKTURA_KOREKTA' ? 'Tak' : 'Nie', i));\n    if (r.typ === 'FAKTURA_KOREKTA') out.push(tag('KOREKTA_NUMER', r.dokument_powiazany, i));\n    out.push(tag('WEWNETRZNA', 'Nie', i));\n    out.push(tag('FISKALNA', 'Nie', i));\n    out.push(tag('DETALICZNA', 'Nie', i));\n    out.push(tag('EKSPORT', krajowy ? 'krajowy' : 'wewnątrzunijny', i));\n    out.push(tag('PODATNIK_CZYNNY', 'Tak', i));\n    out.push(tag('TYP_PODMIOTU', 'kontrahent', i));\n    out.push(tag('PODMIOT', akronim, i));\n    out.push(tag('NAZWA1', String(r.sprzedawca_nazwa || '').slice(0, 50), i));\n    out.push(tag('NAZWA2', String(r.sprzedawca_nazwa || '').slice(50, 100), i));\n    out.push(tag('NIP_KRAJ', krajowy ? 'PL' : kraj, i));\n    out.push(tag('NIP', r.sprzedawca_nip, i));\n    out.push(tag('KRAJ', krajowy ? 'Polska' : kraj, i));\n    out.push(tag('ULICA', r.sprzedawca_ulica, i));\n    out.push(tag('MIASTO', r.sprzedawca_miasto, i));\n    out.push(tag('KOD_POCZTOWY', r.sprzedawca_kod, i));\n    out.push(tag('FORMA_PLATNOSCI', r.forma_platnosci || 'przelew', i));\n    out.push(tag('WALUTA', r.waluta && r.waluta !== 'PLN' ? r.waluta : '', i));\n    out.push(`${i}<POZYCJE>`);\n    vatRows(r).forEach((v) => {\n      const st = vatStatus(v.stawka);\n      const j = i + '    ';\n      out.push(`${i}  <POZYCJA>`);\n      out.push(tag('STAWKA_VAT', st.stawka, j));\n      out.push(tag('STATUS_VAT', st.status, j));\n      out.push(tag('NETTO', amount(v.netto), j));\n      out.push(tag('VAT', amount(v.vat), j));\n      out.push(tag('RODZAJ_ZAKUPU', map.rodzajZakupu, j));\n      out.push(tag('ODLICZENIA_VAT', map.odliczeniaVat, j));\n      out.push(tag('KOLUMNA_KPR', map.kolumnaKpr, j));\n      out.push(`${i}  </POZYCJA>`);\n    });\n    out.push(`${i}</POZYCJE>`);\n    out.push('    </REJESTR_ZAKUPU_VAT>');\n  });\n  out.push('  </REJESTRY_ZAKUPU_VAT>');\n  out.push('</ROOT>');\n  return { xml: out.join('\\n') + '\\n', count: docs.length };\n}\n\n// ===== logika węzła =====\nconst r = $('Walidacja matematyczna').first().json;\nconst { pozycje } = toRegisterRecords(r.doc, r.validation, {});\nreturn pozycje.map((p) => ({ json: p }));\n"
+      },
+      "id": "66544630-9bc6-c369-1018-96c455f5a006",
+      "name": "Pozycje dokumentu",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Konfiguracja').first().json.sheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pozycje",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "useAppend": true,
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "id": "ff994487-a57c-10a5-bb49-b05b5cd942ad",
+      "name": "Zapisz pozycje",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4400,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CredGSheets00001",
+          "name": "Google Sheets – obieg dokumentów"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aa5a74d6-f978-6988-79fb-e083599187f8",
+              "leftValue": "={{ $json.status === 'DO_WERYFIKACJI' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "aa5a74d6-f978-6988-79fb-e083599187f8",
+      "name": "Wymaga weryfikacji?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4000,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFY_EMAIL_FROM }}",
+        "toEmail": "={{ $env.NOTIFY_EMAIL_TO }}",
+        "subject": "={{ $('Nazwa pliku i decyzja').first().json.emailSubject }}",
+        "emailFormat": "html",
+        "html": "={{ $('Nazwa pliku i decyzja').first().json.emailHtml }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c15e34ae-e957-26e8-ebcf-b4001805c076",
+      "name": "Powiadomienie: do weryfikacji",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        4200,
+        500
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "CredSmtp00000001",
+          "name": "Powiadomienia (SMTP)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Wywołanie z 02": {
+      "main": [
+        [
+          {
+            "node": "Konfiguracja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfiguracja": {
+      "main": [
+        [
+          {
+            "node": "Pobierz plik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pobierz plik": {
+      "main": [
+        [
+          {
+            "node": "Zdjęcie?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zdjęcie?": {
+      "main": [
+        [
+          {
+            "node": "Zmniejsz zdjęcie",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Przygotuj zapytanie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zmniejsz zdjęcie": {
+      "main": [
+        [
+          {
+            "node": "Przygotuj zapytanie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Przygotuj zapytanie": {
+      "main": [
+        [
+          {
+            "node": "Claude – odczyt dokumentu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude – odczyt dokumentu": {
+      "main": [
+        [
+          {
+            "node": "Odczytaj odpowiedź",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odczytaj odpowiedź": {
+      "main": [
+        [
+          {
+            "node": "Sprawdź duplikaty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sprawdź duplikaty": {
+      "main": [
+        [
+          {
+            "node": "Walidacja matematyczna",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Walidacja matematyczna": {
+      "main": [
+        [
+          {
+            "node": "Ponowić modelem Sonnet?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ponowić modelem Sonnet?": {
+      "main": [
+        [
+          {
+            "node": "Zapytanie – Sonnet 5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nazwa pliku i decyzja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zapytanie – Sonnet 5": {
+      "main": [
+        [
+          {
+            "node": "Claude – odczyt dokumentu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nazwa pliku i decyzja": {
+      "main": [
+        [
+          {
+            "node": "Dokument poprawny?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dokument poprawny?": {
+      "main": [
+        [
+          {
+            "node": "Szukaj folderu miesiąca",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Folder docelowy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Szukaj folderu miesiąca": {
+      "main": [
+        [
+          {
+            "node": "Folder istnieje?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folder istnieje?": {
+      "main": [
+        [
+          {
+            "node": "Folder docelowy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Utwórz folder miesiąca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Utwórz folder miesiąca": {
+      "main": [
+        [
+          {
+            "node": "Folder docelowy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folder docelowy": {
+      "main": [
+        [
+          {
+            "node": "Zmień nazwę pliku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zmień nazwę pliku": {
+      "main": [
+        [
+          {
+            "node": "Przenieś plik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Przenieś plik": {
+      "main": [
+        [
+          {
+            "node": "Wiersz rejestru",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wiersz rejestru": {
+      "main": [
+        [
+          {
+            "node": "Zapisz w rejestrze",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wymaga weryfikacji?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zapisz w rejestrze": {
+      "main": [
+        [
+          {
+            "node": "Pozycje dokumentu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pozycje dokumentu": {
+      "main": [
+        [
+          {
+            "node": "Zapisz pozycje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wymaga weryfikacji?": {
+      "main": [
+        [
+          {
+            "node": "Powiadomienie: do weryfikacji",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Warsaw",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

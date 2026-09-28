@@ -1,0 +1,116 @@
+{
+  "id": "ObiegDok01Email0",
+  "name": "01 Poczta → folder wejściowy",
+  "nodes": [
+    {
+      "parameters": {
+        "mailbox": "={{ $env.IMAP_MAILBOX || \"INBOX\" }}",
+        "postProcessAction": "read",
+        "downloadAttachments": true,
+        "format": "simple",
+        "dataPropertyAttachmentsPrefixName": "attachment_",
+        "options": {
+          "customEmailConfig": "[\"UNSEEN\"]"
+        }
+      },
+      "id": "aebe0192-a5bf-6bf6-ab53-ab45976a9352",
+      "name": "Nowe maile z załącznikami",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        300
+      ],
+      "credentials": {
+        "imap": {
+          "id": "CredImap00000001",
+          "name": "Skrzynka faktur (IMAP)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// WYGENEROWANE przez scripts/build_workflows.mjs z plików src/*.js.\n// Zmiany wprowadzaj w repozytorium (src/) i przebuduj workflow — nie edytuj tego węzła ręcznie.\n\n// ===== src/filename.js =====\n// Budowa nazwy pliku archiwalnego wg szablonu.\n// Dostępne pola: {data} {rrrr} {mm} {dd} {typ} {nip} {kontrahent} {numer} {oryginal}\n// Domyślny szablon: {data}_{typ}_{nip}_{numer}  ->  2026-09-15_FV_1234563218_FV-123-09-2026.pdf\n\nconst DEFAULT_FILENAME_TEMPLATE = '{data}_{typ}_{nip}_{numer}';\n\nconst TYPE_CODES = {\n  FAKTURA: 'FV',\n  FAKTURA_KOREKTA: 'KOR',\n  WZ: 'WZ',\n  ZAMOWIENIE: 'ZAM',\n  PARAGON: 'PAR',\n  INNY: 'DOK',\n};\n\nconst PL_CHARS = {\n  ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',\n  Ą: 'A', Ć: 'C', Ę: 'E', Ł: 'L', Ń: 'N', Ó: 'O', Ś: 'S', Ź: 'Z', Ż: 'Z',\n};\n\nfunction sanitizeFilePart(value, maxLen) {\n  const s = String(value === null || value === undefined ? '' : value)\n    .replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (c) => PL_CHARS[c])\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[\\\\/:*?\"<>|\\s]+/g, '-')\n    .replace(/[^A-Za-z0-9._-]/g, '')\n    .replace(/-{2,}/g, '-')\n    .replace(/^[-.]+|[-.]+$/g, '');\n  return maxLen ? s.slice(0, maxLen).replace(/[-.]+$/, '') : s;\n}\n\n// Skraca nazwę firmy: usuwa formę prawną i tnie na granicy słowa.\nfunction shortCompanyName(name, maxLen) {\n  const cleaned = String(name || '')\n    .replace(/\\b(sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|sp[óo][łl]ka z ograniczon[ąa] odpowiedzialno[śs]ci[ąa]|s\\.?\\s*a\\.|sp\\.?\\s*[jkp]\\.|sp[óo][łl]ka (jawna|komandytowa|akcyjna|cywilna)|s\\.c\\.|gmbh|ltd\\.?|inc\\.?)(?=\\s|$|,)/gi, '')\n    .replace(/[\\s,.-]+$/, '')\n    .trim();\n  const parts = sanitizeFilePart(cleaned).split('-');\n  let out = '';\n  for (const part of parts) {\n    const next = out ? out + '-' + part : part;\n    if (next.length > maxLen) break;\n    out = next;\n  }\n  return out || sanitizeFilePart(cleaned, maxLen);\n}\n\n// \"PL 123-456-32-18\" -> \"1234563218\"; zagraniczny zostaje z prefiksem: \"DE123456789\"\nfunction cleanNip(nip) {\n  return String(nip || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^PL(?=\\d{10}$)/, '');\n}\n\nfunction fileExtension(originalName, mimeType) {\n  const m = String(originalName || '').match(/\\.([A-Za-z0-9]{2,5})$/);\n  if (m) return '.' + m[1].toLowerCase();\n  const byMime = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };\n  return byMime[mimeType] || '.pdf';\n}\n\nfunction buildFileName(doc, options) {\n  const opt = options || {};\n  const template = opt.template || DEFAULT_FILENAME_TEMPLATE;\n  const d = doc || {};\n  const date = /^\\d{4}-\\d{2}-\\d{2}$/.test(d.data_wystawienia || '') ? d.data_wystawienia : 'brak-daty';\n  const [rrrr, mm, dd] = date === 'brak-daty' ? ['0000', '00', '00'] : date.split('-');\n  const nip = cleanNip(d.sprzedawca && d.sprzedawca.nip) || 'brak-NIP';\n  const original = String(opt.originalName || '').replace(/\\.[A-Za-z0-9]{2,5}$/, '');\n\n  const values = {\n    data: date,\n    rrrr,\n    mm,\n    dd,\n    typ: TYPE_CODES[d.typ_dokumentu] || 'DOK',\n    nip,\n    kontrahent: shortCompanyName((d.sprzedawca && d.sprzedawca.nazwa) || 'brak-kontrahenta', 30),\n    numer: sanitizeFilePart(d.numer || 'brak-numeru', 40),\n    oryginal: sanitizeFilePart(original, 40),\n  };\n\n  let base = template.replace(/\\{(\\w+)\\}/g, (_, k) => (k in values ? values[k] : ''));\n  base = sanitizeFilePart(base, 150);\n  if (opt.prefix) base = sanitizeFilePart(opt.prefix) + '_' + base;\n  return base + fileExtension(opt.originalName, opt.mimeType);\n}\n\nfunction archiveFolderName(doc) {\n  const date = doc && /^\\d{4}-\\d{2}/.test(doc.data_wystawienia || '') ? doc.data_wystawienia.slice(0, 7) : 'bez-daty';\n  return date;\n}\n\n// ===== logika węzła =====\n// Zostawiamy tylko dokumenty (PDF i zdjęcia). Małe obrazki to zwykle logotypy ze stopki maila.\nconst ALLOWED = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];\nconst MIN_IMAGE_BYTES = 30 * 1024;\nconst out = [];\nconst items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const from = String(item.json.from || '');\n  const sender = (from.match(/<([^>]+)>/) || [null, from])[1].split('@')[0];\n  const date = new Date(item.json.date || Date.now()).toISOString().slice(0, 10);\n  for (const [key, bin] of Object.entries(item.binary || {})) {\n    const mime = String(bin.mimeType || '').toLowerCase();\n    if (!ALLOWED.includes(mime)) continue;\n    if (mime.startsWith('image/')) {\n      const buf = await this.helpers.getBinaryDataBuffer(i, key);\n      if (buf.length < MIN_IMAGE_BYTES) continue;\n    }\n    const original = bin.fileName || key;\n    out.push({\n      json: {\n        fileName: sanitizeFilePart(date + '_mail_' + sender + '_' + original, 150),\n        from,\n        subject: item.json.subject || '',\n      },\n      binary: { data: bin },\n      pairedItem: { item: i },\n    });\n  }\n}\nreturn out;\n"
+      },
+      "id": "546d1516-332f-1d22-4317-5bb65888a502",
+      "name": "Wybierz załączniki",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $env.DRIVE_FOLDER_WEJSCIE }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "3d3503b5-637d-f7ff-bb2f-0f200a19b940",
+      "name": "Zapisz w 00_Wejscie",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        480,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CredGDrive000001",
+          "name": "Google Drive – obieg dokumentów"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Nowe maile z załącznikami": {
+      "main": [
+        [
+          {
+            "node": "Wybierz załączniki",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wybierz załączniki": {
+      "main": [
+        [
+          {
+            "node": "Zapisz w 00_Wejscie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Warsaw",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ObiegDok99Error0"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

@@ -1,0 +1,68 @@
+{
+  "id": "ObiegDok99Error0",
+  "name": "99 Obsługa błędów",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e5a49d33-c654-08b6-a299-db2e1280cdd5",
+      "name": "Błąd w workflow",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFY_EMAIL_FROM }}",
+        "toEmail": "={{ $env.NOTIFY_EMAIL_TO }}",
+        "subject": "=[n8n] Błąd w workflow: {{ $json.workflow.name }}",
+        "emailFormat": "html",
+        "html": "=<p>Workflow <b>{{ $json.workflow.name }}</b> zakończył się błędem.</p>\n<p>Węzeł: <b>{{ $json.execution.lastNodeExecuted }}</b><br>\nBłąd: <code>{{ $json.execution.error.message }}</code></p>\n<p><a href=\"{{ $json.execution.url }}\">Otwórz wykonanie w n8n</a></p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "fb07a2b0-5047-237a-3508-dcbcd37318d3",
+      "name": "Alert e-mail",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "CredSmtp00000001",
+          "name": "Powiadomienia (SMTP)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Błąd w workflow": {
+      "main": [
+        [
+          {
+            "node": "Alert e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Warsaw",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

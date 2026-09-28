@@ -1,0 +1,20 @@
+{
+  "name": "n8n-obieg-dokumentow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automatyzacja obiegu dokumentów kosztowych: n8n + Claude + Google Drive + eksport do Comarch Optima",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build": "node scripts/build_workflows.mjs",
+    "samples": "python3 samples/generate_samples.py",
+    "try-extraction": "node scripts/try_extraction.mjs",
+    "test:e2e": "bash tests/e2e/run_in_docker.sh",
+    "deploy": "bash deploy/deploy_mikrus.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.128.0"
+  }
+}
