@@ -1,5 +1,7 @@
 # AI document intake → Comarch Optima (n8n + Claude)
 
+[![tests](https://github.com/PatrykJagielski/ai-invoice-intake-n8n/actions/workflows/test.yml/badge.svg)](https://github.com/PatrykJagielski/ai-invoice-intake-n8n/actions/workflows/test.yml)
+
 **Automated processing of purchase invoices, delivery notes (WZ) and purchase orders for a Polish SME.**
 Documents dropped into a Google Drive folder (scanner, field staff, e-mail attachments) are read by Claude,
 **checked arithmetically by deterministic code**, renamed, archived, logged in a Google Sheets register and
